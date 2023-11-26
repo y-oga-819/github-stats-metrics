@@ -1,13 +1,13 @@
 version: "3.9"
 
 services:
-  app:
+  backend:
     container_name: dev-backend
     build:
       context: backend
       dockerfile: ./build/Dockerfile
     volumes:
-      - ./backend/app/:/go/src/app
+      - ./backend/app:/go/src/app
     tty: true
     ports:
       - 8080:8080
