@@ -11,7 +11,7 @@ const fetchTodos = async () => {
 
 function App() {
   const [count, setCount] = useState(0)
-  const {data: todos } = useQuery(['todos'], fetchTodos);
+  const {data: todos } = useQuery({queryKey: ['todos'], queryFn: fetchTodos});
 
   return (
     <>
@@ -37,8 +37,8 @@ function App() {
       </p>
       <h1>ToDo一覧</h1>
       <ul>
-        {todos?.map((todo) => (
-          <li key={todo.id}>{todo.name}</li>
+        {todos?.map((todo: any) => (
+          <li key={todo.Id}>{todo.Title}</li>
         ))}
       </ul>
     </>
