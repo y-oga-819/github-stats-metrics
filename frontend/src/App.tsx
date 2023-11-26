@@ -2,9 +2,16 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import { useQuery } from '@tanstack/react-query';
+
+const fetchTodos = async () => {
+  const res = await fetch('http://localhost:3000/api/todos');
+  return res.json();
+};
 
 function App() {
   const [count, setCount] = useState(0)
+  const {data: todos } = useQuery(['todos'], fetchTodos);
 
   return (
     <>
@@ -28,6 +35,12 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+      <h1>ToDo一覧</h1>
+      <ul>
+        {todos?.map((todo) => (
+          <li key={todo.id}>{todo.name}</li>
+        ))}
+      </ul>
     </>
   )
 }
