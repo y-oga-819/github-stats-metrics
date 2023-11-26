@@ -17,10 +17,13 @@ services:
       context: frontend
       dockerfile: ./Dockerfile
     volumes:
-      - ./frontend/:/home/node/app
+      - ./frontend:/home/node/app
     tty: true
     ports:
       - 3000:3000
     environment:
       PORT: 3000
       API_URL: http://backend:8080 # backendコンテナにリクエストされるように設定
+    command:
+      /bin/sh -c "yarn install && yarn dev"
+
