@@ -11,3 +11,16 @@ services:
     tty: true
     ports:
       - 8080:8080
+  frontend:
+    container_name: dev-frontend
+    build:
+      context: frontend
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./frontend/:/home/node/app
+    tty: true
+    ports:
+      - 3000:3000
+    environment:
+      PORT: 3000
+      API_URL: http://backend:8080 # backendコンテナにリクエストされるように設定
