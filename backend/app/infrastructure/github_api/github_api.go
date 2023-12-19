@@ -3,92 +3,97 @@ package github_api
 import (
 	"context"
 	"fmt"
-	developerDomain "github-stats-metrics/domain/developer"
 	prDomain "github-stats-metrics/domain/pull_request"
 	"log"
 	"os"
-	"time"
 
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
 )
 
-// GithubAPIv4の解説：https://zenn.dev/hsaki/articles/github-graphql
-// Golangで GithubAPIv4を使うならこのライブラリを使う：https://github.com/shurcooL/githubv4
-func Fetch() []prDomain.PullRequest {
+func createClient() *githubv4.Client {
 	// 認証トークンを使ったクライアントを生成する
 	src := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
-	client := githubv4.NewClient(httpClient)
+	return githubv4.NewClient(httpClient)
+}
+
+type graphqlQuery struct {
+	Search struct {
+		CodeCount githubv4.Int
+		PageInfo  struct {
+			HasNextPage bool
+			EndCursor   githubv4.String
+		}
+		Nodes []struct {
+			Pr prDomain.PullRequest `graphql:"... on PullRequest"`
+		}
+	} `graphql:"search(type: $searchType, first: 100, after: $cursor, query: $query)"`
+	RateLimit struct {
+		Cost      githubv4.Int
+		Limit     githubv4.Int
+		Remaining githubv4.Int
+		ResetAt   githubv4.DateTime
+	}
+}
+
+// GithubAPIv4の解説：https://zenn.dev/hsaki/articles/github-graphql
+// Golangで GithubAPIv4を使うならこのライブラリを使う：https://github.com/shurcooL/githubv4
+func Fetch() []prDomain.PullRequest {
+	// 認証を通したHTTP Clientを作成
+	client := createClient()
 
 	// クエリを構築
-	var query struct {
-		Viewer struct {
-			CreatedPullRequests struct {
-				Nodes    []PullRequest
-				PageInfo struct {
-					EndCursor   githubv4.String
-					HasNextPage bool
-				}
-			} `graphql:"createdPullRequests(first: 30, after: $cursor)"`
-		}
-	}
-
+	query := graphqlQuery{}
 	variables := map[string]interface{}{
-		"cursor": (*githubv4.String)(nil),
-	}
-
-	// GithubAPIv4にアクセス
-	for {
-		// Execute the GraphQL query
-		err := client.Query(context.Background(), &query, variables)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Print information about each PullRequest
-		for _, pr := range query.Viewer.CreatedPullRequests.Nodes {
-			fmt.Printf("Title: %s\n", pr.Title)
-			fmt.Printf("URL: %s\n", pr.URL)
-			fmt.Println("-----")
-		}
-
-		// Check if there are more pages
-		if !query.Viewer.CreatedPullRequests.PageInfo.HasNextPage {
-			break
-		}
-
-		// Set the cursor for the next page
-		variables["cursor"] = githubv4.NewString(query.Viewer.CreatedPullRequests.PageInfo.EndCursor)
+		"searchType": githubv4.SearchTypeIssue,
+		"cursor":     (*githubv4.String)(nil),
+		"query":      githubv4.String(os.Getenv("GITHUB_GRAPHQL_SEARCH_QUERY")),
 	}
 
 	array := make([]prDomain.PullRequest, 0, 1)
 
-	count := 1
-	for i := 0; i < count; i++ {
-		array = append(array, prDomain.PullRequest{
-			Id:     "prId",
-			Title:  "テストPR名",
-			Status: "Opened",
-			Author: developerDomain.Developer{
-				Id:         "y-oga-819",
-				ScreenName: "いらないかも",
-				ImageURL:   "https://avatars.githubusercontent.com/u/6323203?v=4",
-			},
-			Opened:        time.Now(),
-			FirstReviewed: time.Now(),
-			Approved:      time.Now(),
-			Merged:        time.Now(),
-		})
+	for {
+		// GithubAPIv4にアクセス
+		if err := client.Query(context.Background(), &query, variables); err != nil {
+			log.Fatal(err)
+		}
+
+		// 検索結果を詰め替え
+		for _, node := range query.Search.Nodes {
+			array = append(array, node.Pr)
+			debugPrintf(node.Pr)
+		}
+
+		// API LIMIT などのデータをデバッグ表示
+		fmt.Print("\n------------------------------------------------------------\n")
+		fmt.Printf("HasNextPage: %T\n", query.Search.PageInfo.HasNextPage)
+		fmt.Printf("EndCursor: %s\n", query.Search.PageInfo.EndCursor)
+		fmt.Printf("RateLimit: %+v\n", query.RateLimit)
+
+		// データを全て取り切ったら終了
+		if !query.Search.PageInfo.HasNextPage {
+			break
+		}
+
+		// まだ取れるなら取得済みデータまでカーソルを移動する
+		variables["cursor"] = githubv4.NewString(query.Search.PageInfo.EndCursor)
 	}
 
 	return array
 }
 
-// Define the structure to represent a PullRequest
-type PullRequest struct {
-	Title githubv4.String
-	URL   githubv4.URI
+// PullRequest型の構造体の中身をデバッグ表示する
+func debugPrintf(pr prDomain.PullRequest) {
+	// fmt.Printf("%+v\n", pr)
+	fmt.Print("------------------------------------------------------------\n")
+	fmt.Printf("%s\n", pr.Title)
+	fmt.Printf("%s\n", pr.URL)
+	fmt.Printf("CreatedAt: %s\n", pr.CreatedAt)
+	fmt.Printf("FirstReviewed: %s\n", pr.FirstReviewed.Nodes[0].CreatedAt)
+	fmt.Printf("LastApprovedAt: %s\n", pr.LastApprovedAt.Nodes[0].CreatedAt)
+	fmt.Printf("MergedAt: %s\n", pr.MergedAt)
+
 }
