@@ -30,7 +30,7 @@ type graphqlQuery struct {
 		Nodes []struct {
 			Pr prDomain.PullRequest `graphql:"... on PullRequest"`
 		}
-	} `graphql:"search(type: $searchType, first: 100, after: $cursor, query: $query)"`
+	} `graphql:"search(type: $searchType, first: 20, after: $cursor, query: $query)"`
 	RateLimit struct {
 		Cost      githubv4.Int
 		Limit     githubv4.Int
@@ -64,7 +64,7 @@ func Fetch() []prDomain.PullRequest {
 		// 検索結果を詰め替え
 		for _, node := range query.Search.Nodes {
 			array = append(array, node.Pr)
-			debugPrintf(node.Pr)
+			//			debugPrintf(node.Pr)
 		}
 
 		// API LIMIT などのデータをデバッグ表示

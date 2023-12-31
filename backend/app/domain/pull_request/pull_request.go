@@ -3,6 +3,8 @@ package pull_request
 import "github.com/shurcooL/githubv4"
 
 type PullRequest struct {
+	Id          githubv4.String
+	Number      githubv4.Int
 	Title       githubv4.String
 	BaseRefName githubv4.String
 	HeadRefName githubv4.String

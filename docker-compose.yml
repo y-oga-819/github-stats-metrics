@@ -25,5 +25,5 @@ services:
       PORT: 3000
       API_URL: http://backend:8080 # backendコンテナにリクエストされるように設定
     command:
-      /bin/sh -c "yarn install && yarn dev"
+      /bin/sh -c "yarn install && yarn build && yarn dev"
 
