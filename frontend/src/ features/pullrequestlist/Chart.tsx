@@ -3,20 +3,20 @@ import ReactApexChart from "react-apexcharts";
 import { PR } from "./PullRequest";
 
 type ChartProps = {
-  prs: PR[]|null
+  prs: PR[]|undefined
 }
 
 export const Chart: React.FC<ChartProps> = ({prs}) => {
   const prIds = prs?.map((pr: PR) => {return pr.id})
    const betweenFirstReviewAndCreated = prs?.map((pr: PR) => {
     return pr.firstReviewed.getTime() - pr.created.getTime()
-  })
+  }) ?? []
   const betweenLastApprovedAndFirstReviewed = prs?.map((pr: PR) => {
     return pr.lastApproved.getTime() - pr.firstReviewed.getTime()
-  })
+  }) ?? []
   const betweenMergedAndLastApproved = prs?.map((pr: PR) => {
     return pr.merged.getTime() - pr.lastApproved.getTime()
-  })
+  }) ?? []
 
   const chartData: ApexOptions = {
       chart: {
