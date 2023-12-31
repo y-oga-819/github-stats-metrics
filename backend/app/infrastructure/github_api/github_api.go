@@ -24,7 +24,7 @@ type graphqlQuery struct {
 	Search struct {
 		CodeCount githubv4.Int
 		PageInfo  struct {
-			HasNextPage bool
+			HasNextPage githubv4.Boolean
 			EndCursor   githubv4.String
 		}
 		Nodes []struct {
@@ -54,6 +54,7 @@ func Fetch() []prDomain.PullRequest {
 	}
 
 	array := make([]prDomain.PullRequest, 0, 1)
+	prCount := 0
 
 	for {
 		// GithubAPIv4にアクセス
@@ -64,17 +65,21 @@ func Fetch() []prDomain.PullRequest {
 		// 検索結果を詰め替え
 		for _, node := range query.Search.Nodes {
 			array = append(array, node.Pr)
-			debugPrintf(node.Pr)
+			// debugPrintf(node.Pr)
 		}
+
+		// 取得数をカウント
+		prCount += len(query.Search.Nodes)
 
 		// API LIMIT などのデータをデバッグ表示
 		fmt.Print("\n------------------------------------------------------------\n")
-		fmt.Printf("HasNextPage: %T\n", query.Search.PageInfo.HasNextPage)
+		fmt.Printf("HasNextPage: %t\n", query.Search.PageInfo.HasNextPage)
 		fmt.Printf("EndCursor: %s\n", query.Search.PageInfo.EndCursor)
 		fmt.Printf("RateLimit: %+v\n", query.RateLimit)
 
 		// データを全て取り切ったら終了
 		if !query.Search.PageInfo.HasNextPage {
+			fmt.Printf("取得したPR数: %d\n", prCount)
 			break
 		}
 
