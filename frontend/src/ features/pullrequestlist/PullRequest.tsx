@@ -38,11 +38,11 @@ export const PullRequest: React.FC<PullRequestProps> = ({pr}) => {
     return (
         <tr className="hover:bg-gray-100 dark:hover:bg-gray-700">
             <td className="text-xs text-left">{pr.repository}:{pr.id}</td>
-            <td><img className='object-contain' width="20" src={pr.iconURL}/></td>
-            <td className='text-left text-xs'><Link to={pr.url}>{pr.title}</Link></td>
-            <td className="text-right">{format(pr.created, pr.firstReviewed)}</td>
-            <td className="text-right">{format(pr.firstReviewed, pr.lastApproved)}</td>
-            <td className="text-right">{format(pr.lastApproved, pr.merged)}</td>
+            <td className='text-center'><img className='object-contain' width="20" src={pr.iconURL}/></td>
+            <td className="text-right text-xs">{format(pr.created, pr.firstReviewed)}</td>
+            <td className="text-right text-xs">{format(pr.firstReviewed, pr.lastApproved)}</td>
+            <td className="text-right text-xs">{format(pr.lastApproved, pr.merged)}</td>
+            <td className='text-left text-xs pl-8'><Link to={pr.url}>{pr.title}</Link></td>
             <td></td>
         </tr>
     )

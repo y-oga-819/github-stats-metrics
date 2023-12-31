@@ -43,12 +43,12 @@ export const PullRequestList = () => {
                 <table className="flex-none divide-y divide-gray-200 dark:divide-gray-700">
                     <thead>
                         <tr>
-                            <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">ID</th>
-                            <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Author</th>
-                            <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">Title</th>
-                            <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">初回レビューまでにかかった時間</th>
-                            <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">初回〜最終Aprvまでの時間</th>
-                            <th scope="col" className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase">最終Aprv〜Mergeまでの時間</th>
+                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">ID</th>
+                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">Author</th>
+                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">初回レビューまで</th>
+                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">初回〜最終Aprvまで</th>
+                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">最終Aprv〜Mergeまで</th>
+                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">Title</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
