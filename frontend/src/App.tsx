@@ -1,46 +1,46 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
-import { useQuery } from '@tanstack/react-query';
+import { PullRequestList } from './ features/pullrequestlist/PullRequestList';
+import { BrowserRouter } from 'react-router-dom';
+import { Chart } from './ features/pullrequestlist/Chart';
+import { useQuery } from "@tanstack/react-query";
+import { PR } from "./ features/pullrequestlist/PullRequest";
 
-const fetchTodos = async () => {
-  const res = await fetch('http://localhost:3000/api/todos');
-  return res.json();
+const fetchPullRequests = async () => {
+  const data = await fetch('http://localhost:3000/api/pull_requests')
+      .then((res) => res.json())
+      .then((data) => {
+          console.log(data)
+          const result: PR[] = [];
+          for (const pr of data) {
+              const newPR: PR = {
+                  id: pr.Number,
+                  title: pr.Title,
+                  url: pr.URL,
+                  username: pr.Author.Login,
+                  iconURL: pr.Author.AvatarURL,
+                  repository: pr.Repository.Name,
+                  created: new Date(pr.CreatedAt),
+                  firstReviewed: new Date(pr.FirstReviewed.Nodes[0].CreatedAt),
+                  lastApproved: new Date(pr.LastApprovedAt.Nodes[0].CreatedAt),
+                  merged: new Date(pr.MergedAt),
+              }
+              result.push(newPR)
+          }
+          return result
+      })
+      .catch(console.error);
+  return data;
 };
 
 function App() {
-  const [count, setCount] = useState(0)
-  const {data: todos } = useQuery({queryKey: ['todos'], queryFn: fetchTodos});
+  const {data: pullRequests } = useQuery({queryKey: ['pullRequests'], queryFn: fetchPullRequests});
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      <h1>ToDo一覧</h1>
-      <ul>
-        {todos?.map((todo: any) => (
-          <li key={todo.Id}>{todo.Title}</li>
-        ))}
-      </ul>
+      <Chart prs={pullRequests}/>
+      <BrowserRouter>
+        <PullRequestList prs={pullRequests}/>
+      </BrowserRouter>
     </>
   )
 }
