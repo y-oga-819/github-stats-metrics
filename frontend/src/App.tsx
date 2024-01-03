@@ -2,7 +2,7 @@ import './App.css'
 import { PullRequestList } from './features/pullrequestlist/PullRequestList';
 import { BrowserRouter } from 'react-router-dom';
 
-function App() {
+export const App = () => {
   return (
     <>
       {/* <Chart prs={pullRequests}/> */}
