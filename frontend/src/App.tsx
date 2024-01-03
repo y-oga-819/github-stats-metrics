@@ -1,16 +1,16 @@
 import './App.css'
-import { PullRequestList } from './ features/pullrequestlist/PullRequestList';
+import { PullRequestList } from './features/pullrequestlist/PullRequestList';
 import { BrowserRouter } from 'react-router-dom';
+import { SprintList } from './features/sprintlist/SprintList';
 
-function App() {
+export const App = () => {
   return (
     <>
       {/* <Chart prs={pullRequests}/> */}
       <BrowserRouter>
+        <SprintList/>
         <PullRequestList/>
       </BrowserRouter>
     </>
   )
 }
-
-export default App
