@@ -1,6 +1,3 @@
-import { ApexOptions } from "apexcharts";
-import { PR } from "./PullRequest";
-
 export const Chart = () => {
   // const prIds = prs?.map((pr: PR) => {return pr.id})
   //  const betweenFirstReviewAndCreated = prs?.map((pr: PR) => {
