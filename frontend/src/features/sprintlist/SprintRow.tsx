@@ -1,6 +1,7 @@
 
 export type Member = {
-    name: String
+    name: string
+    iconURL: string
 }
 
 export type Sprint = {
@@ -20,11 +21,10 @@ export const SprintRow: React.FC<SprintProp> = ({sprint}) => {
             <td>{sprint.id}</td>
             <td>{sprint.startDate.toISOString().split('T')[0]}</td>
             <td>{sprint.endDate.toISOString().split('T')[0]}</td>
-            <td className="whitespace-pre-wrap">
+            <td className="text-left">
                 {sprint.members.map(
-                    (member: Member) => {return member.name}
-                )
-                .join(', ')}
+                    (member: Member) => <img className="inline-block pr-1" src={member.iconURL} width={20} />
+                )}
             </td>
         </tr>
     )
