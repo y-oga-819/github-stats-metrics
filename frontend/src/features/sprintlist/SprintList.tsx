@@ -6,10 +6,11 @@ export const SprintList = () => {
     const [sprintList, setSprintList] = useState<Sprint[]>([])
 
     useEffect(() => {
-        const result = GetSprintList();
-    
-        setSprintList(result)    
-    })
+        const fetchSprintList = async () => {
+            setSprintList(GetSprintList())
+        }
+        fetchSprintList()
+    }, [])
 
     return (
         <table className='divide-y divide-gray-200 dark:divide-gray-700'>
