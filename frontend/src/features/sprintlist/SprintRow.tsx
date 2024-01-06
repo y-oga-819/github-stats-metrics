@@ -24,10 +24,10 @@ export const SprintRow: React.FC<SprintProp> = ({sprint}) => {
             <td>{sprint.endDate.toISOString().split('T')[0]}</td>
             <td className="text-left">
                 {sprint.members.map(
-                    (member: Member) => <img className="inline-block pr-1" src={member.iconURL} width={20} />
+                    (member: Member) => <img key={member.name} className="inline-block pr-1" src={member.iconURL} width={20} />
                 )}
             </td>
-            <td><Link to={'/sprints/' + sprint.id}>詳細</Link></td>
+            <td><Link to={sprint.id.toString()}>詳細</Link></td>
         </tr>
     )
 }
