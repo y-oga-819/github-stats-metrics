@@ -1,40 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Sprint, SprintRow } from './SprintRow'
+import { GetSprintList } from './GetConstSprintList';
 
 export const SprintList = () => {
-    const result: Sprint[] = [];
-
     const [sprintList, setSprintList] = useState<Sprint[]>([])
 
     useEffect(() => {
-        result.push({
-            id: 1,
-            startDate: new Date('2024-01-01'),
-            endDate: new Date('2024-01-08'),
-            members: [
-                {name: 'oga'}, {name: 'shiiyan'}
-            ]
-        },
-        {
-            id: 2,
-            startDate: new Date('2024-01-09'),
-            endDate: new Date('2024-01-16'),
-            members: [
-                {name: 'oga'}, {name: 'shiiyan'}
-            ]
-        })
+        const result = GetSprintList();
     
         setSprintList(result)    
     })
 
     return (
-        <table>
+        <table className='divide-y divide-gray-200 dark:divide-gray-700'>
             <thead>
                 <tr>
                     <th>No.</th>
                     <th>開始日</th>
                     <th>終了日</th>
                     <th>参加者</th>
+                    <th>詳細</th>
                 </tr>
             </thead>
             <tbody>
