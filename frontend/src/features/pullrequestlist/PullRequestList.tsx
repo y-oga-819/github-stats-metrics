@@ -37,7 +37,7 @@ export const PullRequestList = () => {
 
     return (
         <>
-            <h1>プルリクエスト一覧</h1>
+            <h1 className="text-left">プルリクエスト一覧</h1>
 
             <div className="flex overflow-x-auto">
                 <table className="flex-none divide-y divide-gray-200 dark:divide-gray-700">
