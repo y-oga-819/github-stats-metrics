@@ -12,13 +12,14 @@ export const SprintList = () => {
     })
 
     return (
-        <table>
+        <table className='divide-y divide-gray-200 dark:divide-gray-700'>
             <thead>
                 <tr>
                     <th>No.</th>
                     <th>開始日</th>
                     <th>終了日</th>
                     <th>参加者</th>
+                    <th>詳細</th>
                 </tr>
             </thead>
             <tbody>

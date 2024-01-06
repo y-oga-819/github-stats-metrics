@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 
 export type Member = {
     name: string
@@ -26,6 +27,7 @@ export const SprintRow: React.FC<SprintProp> = ({sprint}) => {
                     (member: Member) => <img className="inline-block pr-1" src={member.iconURL} width={20} />
                 )}
             </td>
+            <td><Link to={'/sprints/' + sprint.id}>詳細</Link></td>
         </tr>
     )
 }
