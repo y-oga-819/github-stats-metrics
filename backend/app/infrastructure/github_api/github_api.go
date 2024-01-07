@@ -41,7 +41,7 @@ type graphqlQuery struct {
 
 // GithubAPIv4の解説：https://zenn.dev/hsaki/articles/github-graphql
 // Golangで GithubAPIv4を使うならこのライブラリを使う：https://github.com/shurcooL/githubv4
-func Fetch() []prDomain.PullRequest {
+func Fetch(queryParametes prDomain.GetPullRequestsRequest) []prDomain.PullRequest {
 	// 認証を通したHTTP Clientを作成
 	client := createClient()
 
