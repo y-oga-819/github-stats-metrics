@@ -8,9 +8,18 @@ type PullRequestListProp = {
 
 export const PullRequestList: React.FC<PullRequestListProp> = ({sprint}) => {
     const [pullRequests, setPullRequests] = useState<PR[]>([]);
-  
+
+    const params = {
+        startdate : sprint.startDate.toISOString().split('T')[0],
+        enddate: sprint.endDate.toISOString().split('T')[0],
+    };
+    const queryParameters = new URLSearchParams(params);
+    sprint.members.map(
+        (member: Member) => queryParameters.append('developers', member.name)
+    )
+
     useEffect(() => {
-        fetch('http://localhost:8080/api/pull_requests')
+        fetch(`http://localhost:8080/api/pull_requests?${queryParameters}`)
         .then((res) => res.json())
         .then((data) => {
             const result: PR[] = [];
