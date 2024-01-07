@@ -98,7 +98,7 @@ func createQuery(startDate string, endDate string, developers []string) string {
 
 	// リポジトリ
 	repositories := strings.Split(os.Getenv("GITHUB_GRAPHQL_SEARCH_QUERY_TARGET_REPOSITORIES"), ",")
-	query += "repo:" + strings.Join(repositories, "repo:") + " "
+	query += "repo:" + strings.Join(repositories, " repo:") + " "
 
 	// 開発者
 	query += "author:" + strings.Join(developers, " author:")
