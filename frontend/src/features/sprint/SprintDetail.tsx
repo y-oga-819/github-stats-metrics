@@ -1,15 +1,19 @@
-import { useParams } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { PullRequestList } from "../pullrequestlist/PullRequestList"
-type Params = {
-    sprintId?: string
+import { Sprint } from "../sprintlist/SprintRow"
+
+interface State {
+    sprint: Sprint
 }
 
 export const SprintDetail = () => {
-    const params: Params = useParams<Params>()
+    const location = useLocation();
+    const { sprint } = location.state as State;
+
     return (
         <>
-            <h2>{'Sprint ' + params?.sprintId}</h2>
-            <PullRequestList/>
+            <h2>{'Sprint ' + sprint.id}</h2>
+            <PullRequestList sprint={sprint}/>
         </>
     )
 }

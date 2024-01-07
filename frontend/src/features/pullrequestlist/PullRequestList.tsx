@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { PullRequest, PR } from "./PullRequest";
+import { Member, Sprint } from "../sprintlist/SprintRow";
 
-export const PullRequestList = () => {
+type PullRequestListProp = {
+    sprint: Sprint
+}
+
+export const PullRequestList: React.FC<PullRequestListProp> = ({sprint}) => {
     const [pullRequests, setPullRequests] = useState<PR[]>([]);
   
     useEffect(() => {
