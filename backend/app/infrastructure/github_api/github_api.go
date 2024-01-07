@@ -6,6 +6,7 @@ import (
 	prDomain "github-stats-metrics/domain/pull_request"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
@@ -50,7 +51,7 @@ func Fetch(queryParametes prDomain.GetPullRequestsRequest) []prDomain.PullReques
 	variables := map[string]interface{}{
 		"searchType": githubv4.SearchTypeIssue,
 		"cursor":     (*githubv4.String)(nil),
-		"query":      githubv4.String(os.Getenv("GITHUB_GRAPHQL_SEARCH_QUERY")),
+		"query":      githubv4.String(createQuery(queryParametes.StartDate, queryParametes.EndDate, queryParametes.Developers)),
 	}
 
 	array := make([]prDomain.PullRequest, 0, 1)
@@ -90,6 +91,22 @@ func Fetch(queryParametes prDomain.GetPullRequestsRequest) []prDomain.PullReques
 	return array
 }
 
+// GitHub API v4 にリクエストするクエリの検索条件文字列を生成する
+func createQuery(startDate string, endDate string, developers []string) string {
+	// 期間
+	query := fmt.Sprintf("merged:%s..%s ", startDate, endDate)
+
+	// リポジトリ
+	repositories := strings.Split(os.Getenv("GITHUB_GRAPHQL_SEARCH_QUERY_TARGET_REPOSITORIES"), ",")
+	query += "repo:" + strings.Join(repositories, "repo:") + " "
+
+	// 開発者
+	query += "author:" + strings.Join(developers, " author:")
+
+	fmt.Println(query)
+	return query
+}
+
 // PullRequest型の構造体の中身をデバッグ表示する
 func debugPrintf(pr prDomain.PullRequest) {
 	// fmt.Printf("%+v\n", pr)
@@ -100,5 +117,4 @@ func debugPrintf(pr prDomain.PullRequest) {
 	fmt.Printf("FirstReviewed: %s\n", pr.FirstReviewed.Nodes[0].CreatedAt)
 	fmt.Printf("LastApprovedAt: %s\n", pr.LastApprovedAt.Nodes[0].CreatedAt)
 	fmt.Printf("MergedAt: %s\n", pr.MergedAt)
-
 }
