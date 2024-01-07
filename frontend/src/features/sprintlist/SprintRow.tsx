@@ -27,7 +27,7 @@ export const SprintRow: React.FC<SprintProp> = ({sprint}) => {
                     (member: Member) => <img key={member.name} className="inline-block pr-1" src={member.iconURL} width={20} />
                 )}
             </td>
-            <td><Link to={sprint.id.toString()}>詳細</Link></td>
+            <td><Link to={sprint.id.toString()} state={{sprint: sprint}}>詳細</Link></td>
         </tr>
     )
 }
