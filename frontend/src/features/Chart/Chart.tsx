@@ -11,6 +11,7 @@ import { GetSprintList } from "../sprintlist/GetConstSprintList";
 import { useEffect, useState } from "react";
 import { FetchPullRequests } from "../pullrequestlist/PullRequestsFetcher";
 import { MetricsChart } from "./MetricsChart";
+import { PrCountChart } from './PrCountChart';
 
 ChartJS.register(
   CategoryScale,
@@ -33,6 +34,7 @@ export const Chart = () => {
   const [untilFirstReviewedList, setUntilFirstReviewedList] = useState<Metrics[]>([]);
   const [untilLastApprovedList, setUntilLastApprovedList] = useState<Metrics[]>([]);
   const [untilMergedList, setUntilMergedList] = useState<Metrics[]>([]);
+  const [prCountList, setPrCountList] = useState<Metrics[]>([]);
 
   useEffect(() => {
     // スプリント毎のPRをチャートに反映する
@@ -43,6 +45,7 @@ export const Chart = () => {
       .then((prs) => {
         // PR数を計算
         const prCount = prs.length
+        setPrCountList((prCountList) => [...prCountList, {sprintId: sprint.id, score: prCount}])
 
         // レビューまでにかかった時間を計算
         const untilFirstReviewed = prs
@@ -70,6 +73,7 @@ export const Chart = () => {
 return (
     <>
       <MetricsChart sprintList={sprintList} untilFirstReviewedList={untilFirstReviewedList} untilLastApprovedList={untilLastApprovedList} untilMergedList={untilMergedList} />
+      <PrCountChart sprintList={sprintList} prCountList={prCountList} />
     </>
   )
 };
