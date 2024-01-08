@@ -20,9 +20,6 @@ const chartOptions = {
           borderColor: 'red'  // 基準線の色
         }] 
       },
-      legend: {
-        position: 'bottom',
-      }
     },
     responsive: true,
     scales: {
