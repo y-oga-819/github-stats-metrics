@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { FetchPullRequests } from "../pullrequestlist/PullRequestsFetcher";
 import { MetricsChart } from "./MetricsChart";
 import { PrCountChart } from './PrCountChart';
+import { DevDayDeveloperList } from './DevDayDeveloperChart';
 
 ChartJS.register(
   CategoryScale,
@@ -35,6 +36,7 @@ export const Chart = () => {
   const [untilLastApprovedList, setUntilLastApprovedList] = useState<Metrics[]>([]);
   const [untilMergedList, setUntilMergedList] = useState<Metrics[]>([]);
   const [prCountList, setPrCountList] = useState<Metrics[]>([]);
+  const [devDayDeveloperList, setDevDayDeveloperList] = useState<Metrics[]>([]);
 
   useEffect(() => {
     // スプリント毎のPRをチャートに反映する
@@ -46,6 +48,10 @@ export const Chart = () => {
         // PR数を計算
         const prCount = prs.length
         setPrCountList((prCountList) => [...prCountList, {sprintId: sprint.id, score: prCount}])
+
+        // Dev/Day/Developerを計算
+        const devDayDeveloper = prCount / sprint.members.length / 5
+        setDevDayDeveloperList((devDayDeveloperList) => [...devDayDeveloperList, {sprintId: sprint.id, score: devDayDeveloper}])
 
         // レビューまでにかかった時間を計算
         const untilFirstReviewed = prs
@@ -74,6 +80,7 @@ return (
     <>
       <MetricsChart sprintList={sprintList} untilFirstReviewedList={untilFirstReviewedList} untilLastApprovedList={untilLastApprovedList} untilMergedList={untilMergedList} />
       <PrCountChart sprintList={sprintList} prCountList={prCountList} />
+      <DevDayDeveloperList sprintList={sprintList} devDayDeveloperList={devDayDeveloperList} />
     </>
   )
 };
