@@ -7,47 +7,51 @@ type PullRequestListProp = {
 }
 
 export const PullRequestList: React.FC<PullRequestListProp> = ({sprint}) => {
-    const [pullRequests, setPullRequests] = useState<PR[]>([]);
-
-    const params = {
-        startdate : sprint.startDate.toISOString().split('T')[0],
-        enddate: sprint.endDate.toISOString().split('T')[0],
-    };
-    const queryParameters = new URLSearchParams(params);
-    sprint.members.map(
-        (member: Member) => queryParameters.append('developers', member.name)
-    )
+    const [pullRequests, setPullRequests] = useState<PR[]|null>(null);
 
     useEffect(() => {
-        fetch(`http://localhost:8080/api/pull_requests?${queryParameters}`)
-        .then((res) => res.json())
-        .then((data) => {
-            const result: PR[] = [];
-
-            for (const pr of data) {
-                // PR型に詰め替え
-                const newPR: PR = {
-                    id: pr.Number,
-                    title: pr.Title,
-                    url: pr.URL,
-                    username: pr.Author.Login,
-                    iconURL: pr.Author.AvatarURL,
-                    repository: pr.Repository.Name,
-                    created: new Date(pr.CreatedAt),
-                    firstReviewed: new Date(pr.FirstReviewed.Nodes[0].CreatedAt),
-                    lastApproved: new Date(pr.LastApprovedAt.Nodes[0].CreatedAt),
-                    merged: new Date(pr.MergedAt),
+        const fetchPullRequests = async () => {
+            const params = {
+                startdate : sprint.startDate.toISOString().split('T')[0],
+                enddate: sprint.endDate.toISOString().split('T')[0],
+            };
+            const queryParameters = new URLSearchParams(params);
+            sprint.members.map(
+                (member: Member) => queryParameters.append('developers', member.name)
+            )
+        
+            fetch(`http://localhost:8080/api/pull_requests?${queryParameters}`)
+            .then((res) => res.json())
+            .then((data) => {
+                const result: PR[] = [];
+    
+                for (const pr of data) {
+                    // PR型に詰め替え
+                    const newPR: PR = {
+                        id: pr.Number,
+                        title: pr.Title,
+                        url: pr.URL,
+                        username: pr.Author.Login,
+                        iconURL: pr.Author.AvatarURL,
+                        repository: pr.Repository.Name,
+                        created: new Date(pr.CreatedAt),
+                        firstReviewed: new Date(pr.FirstReviewed.Nodes[0].CreatedAt),
+                        lastApproved: new Date(pr.LastApprovedAt.Nodes[0].CreatedAt),
+                        merged: new Date(pr.MergedAt),
+                    }
+    
+                    // 配列に追加
+                    result.push(newPR)
                 }
+    
+                // Stateにセット
+                setPullRequests(result);
+            })
+            .catch(error => console.error(error));
+        }
 
-                // 配列に追加
-                result.push(newPR)
-            }
-
-            // Stateにセット
-            setPullRequests(result);
-        })
-        .catch(error => console.error(error));
-    }, []);
+        fetchPullRequests()
+    }, []); // 空配列を依存リストとして渡すと、マウント時に一回だけ実行される
 
     return (
         <>
