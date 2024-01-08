@@ -57,25 +57,29 @@ export const PullRequestList: React.FC<PullRequestListProp> = ({sprint}) => {
         <>
             <h1 className="text-left">プルリクエスト一覧</h1>
 
-            <div className="flex overflow-x-auto">
-                <table className="flex-none divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead>
-                        <tr>
-                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">ID</th>
-                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">Author</th>
-                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">初回レビューまで</th>
-                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">初回〜最終Aprvまで</th>
-                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">最終Aprv〜Mergeまで</th>
-                            <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">Title</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {pullRequests?.map((pr: PR) => {
-                            return <PullRequest key={pr.id} pr={pr} />;
-                        })}
-                    </tbody>
-                </table>
-            </div>
+            {pullRequests ? (
+                <div className="flex overflow-x-auto">
+                    <table className="flex-none divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">ID</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">Author</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">初回レビューまで</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">初回〜最終Aprvまで</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">最終Aprv〜Mergeまで</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">Title</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                            {pullRequests.map((pr: PR) => {
+                                return <PullRequest key={pr.id} pr={pr} />;
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            ) : 
+                <div>Loading...</div>
+            }
         </>
     )
 }
