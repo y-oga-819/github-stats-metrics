@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 import { PullRequestList } from "../pullrequestlist/PullRequestList"
 import { Sprint } from "../sprintlist/SprintRow"
 

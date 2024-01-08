@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import { SprintList } from './features/sprintlist/SprintList';
-import { Chart } from './features/pullrequestlist/Chart';
+import { Chart } from './features/Chart/Chart';
 import { SprintDetail } from './features/sprint/SprintDetail';
 
 export const AppRouter = () => {

@@ -7,6 +7,7 @@ type PullRequestProps = {
 export type PR = {
     id: number
     title: string
+    branchName: string
     url: string
     username: string
     iconURL: string
