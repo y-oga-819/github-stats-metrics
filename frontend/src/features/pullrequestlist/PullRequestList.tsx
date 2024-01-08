@@ -30,6 +30,7 @@ export const PullRequestList: React.FC<PullRequestListProp> = ({sprint}) => {
                     const newPR: PR = {
                         id: pr.Number,
                         title: pr.Title,
+                        branchName: pr.BranchName,
                         url: pr.URL,
                         username: pr.Author.Login,
                         iconURL: pr.Author.AvatarURL,
