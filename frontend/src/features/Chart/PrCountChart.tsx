@@ -35,7 +35,7 @@ export const PrCountChart: React.FC<PrCountChartProps> = ({sprintList, prCountLi
         datasets: [
           {
             label: 'マージしたPR数',
-            data: prCountList.map((metrics) => metrics.score),
+            data: Object.values(prCountList.sort((a, b) => a.sprintId - b.sprintId).reduce((prev, current) => ({[current.sprintId]: current.score,...prev}), {})),
             backgroundColor: 'rgb(255, 99, 132)',
           },
         ],
