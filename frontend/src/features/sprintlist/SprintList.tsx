@@ -12,6 +12,8 @@ export const SprintList = () => {
         fetchSprintList()
     }, [])
 
+    const sprintListSorted = sprintList.sort((a, b) => b.id - a.id)
+
     return (
         <table className='divide-y divide-gray-200 dark:divide-gray-700'>
             <thead>
@@ -24,7 +26,7 @@ export const SprintList = () => {
                 </tr>
             </thead>
             <tbody>
-                {sprintList?.map((sprint: Sprint) => {
+                {sprintListSorted?.map((sprint: Sprint) => {
                     return <SprintRow key={sprint.id} sprint={sprint}/>
                 })}
             </tbody>
