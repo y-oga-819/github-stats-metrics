@@ -19,12 +19,12 @@ export const PullRequestList: React.FC<PullRequestListProp> = ({sprint}) => {
             sprint.members.map(
                 (member: Member) => queryParameters.append('developers', member.name)
             )
-        
+
             fetch(`http://localhost:8080/api/pull_requests?${queryParameters}`)
             .then((res) => res.json())
             .then((data) => {
                 const result: PR[] = [];
-    
+
                 for (const pr of data) {
                     // PR型に詰め替え
                     const newPR: PR = {
@@ -40,11 +40,11 @@ export const PullRequestList: React.FC<PullRequestListProp> = ({sprint}) => {
                         lastApproved: new Date(pr.LastApprovedAt.Nodes[0].CreatedAt),
                         merged: new Date(pr.MergedAt),
                     }
-    
+
                     // 配列に追加
                     result.push(newPR)
                 }
-    
+
                 // Stateにセット
                 setPullRequests(result);
             })
@@ -59,26 +59,26 @@ export const PullRequestList: React.FC<PullRequestListProp> = ({sprint}) => {
             <h1 className="text-left">プルリクエスト一覧</h1>
 
             {pullRequests ? (
-                <div className="flex overflow-x-auto">
+                <div className="flex">
                     <table className="flex-none divide-y divide-gray-200 dark:divide-gray-700">
                         <thead>
                             <tr>
-                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">ID</th>
-                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">Author</th>
-                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">初回レビューまで</th>
-                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">初回〜最終Aprvまで</th>
-                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">最終Aprv〜Mergeまで</th>
-                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500 ">Title</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500">ID</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500">Author</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500">初回レビューまで</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500">初回〜最終Aprvまで</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500">最終Aprv〜Mergeまで</th>
+                                <th scope="col" className="pl-4 py-2 text-start text-xs font-medium text-gray-500">Title</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        <tbody className="divide-y divide-gray-200 bg-white">
                             {pullRequests.map((pr: PR) => {
                                 return <PullRequest key={pr.id} pr={pr} />;
                             })}
                         </tbody>
                     </table>
                 </div>
-            ) : 
+            ) :
                 <div>Loading...</div>
             }
         </>
