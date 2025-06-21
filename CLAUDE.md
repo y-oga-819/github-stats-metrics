@@ -5,6 +5,61 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Conversation Guidelines
 - 常に日本語で会話する
 
+## 作業フロー
+
+### 基本的な作業手順
+1. **新規ブランチ作成**: 指示を受けたら必ずmainブランチから新規ブランチを作成
+2. **細かなコミット**: 作業進行中は適時、細かい粒度でコミットを実行
+3. **プルリクエスト作成**: 作業完了後、ghコマンドでPRを作成
+
+### 詳細手順
+
+#### 1. ブランチ作成
+```bash
+git checkout main
+git pull origin main
+git checkout -b [category]/[feature-name]
+```
+
+**ブランチ命名規則**:
+- `feature/[機能名]` - 新機能追加
+- `fix/[修正内容]` - バグ修正
+- `refactor/[対象]` - リファクタリング
+- `docs/[ドキュメント名]` - ドキュメント作成・更新
+- `documentation/[分析内容]` - 分析・調査系ドキュメント
+
+#### 2. 作業とコミット
+- **コミット粒度**: 論理的な作業単位ごとに実行
+- **コミットメッセージ**: Conventional Commits形式
+  - `feat:` - 新機能
+  - `fix:` - バグ修正
+  - `docs:` - ドキュメント
+  - `refactor:` - リファクタリング
+  - `test:` - テスト追加・修正
+
+```bash
+git add [対象ファイル]
+git commit -m "type: 簡潔な説明
+
+詳細説明（必要に応じて）
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+#### 3. プルリクエスト作成
+```bash
+git push -u origin [ブランチ名]
+gh pr create --title "[タイトル]" --body "[詳細説明]"
+```
+
+**PRテンプレート構成**:
+- Summary: 変更概要
+- 主要な変更点
+- Test plan: テスト/確認事項
+- 🤖 Generated with [Claude Code] 署名
+
 ## Development Commands
 
 ### Backend (Go)
