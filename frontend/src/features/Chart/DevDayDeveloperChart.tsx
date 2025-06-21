@@ -24,7 +24,7 @@ export const DevDayDeveloperList: React.FC<DevDayDeveloperChartProps> = ({sprint
         datasets: [
           {
             label: 'Dev / Day / Developer',
-            data: devDayDeveloperList.map((metrics) => metrics.score ),
+            data: Object.values(devDayDeveloperList.sort((a, b) => a.sprintId - b.sprintId).reduce((prev, current) => ({[current.sprintId]: current.score,...prev}), {})),
             backgroundColor: 'rgb(75, 192, 192)',
           },
         ],
