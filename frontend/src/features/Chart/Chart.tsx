@@ -9,10 +9,11 @@ import {
 } from 'chart.js';
 import { GetSprintList } from "../sprintlist/GetConstSprintList";
 import { useEffect, useState } from "react";
-import { FetchPullRequests } from "../pullrequestlist/PullRequestsFetcher";
 import { MetricsChart } from "./MetricsChart";
 import { PrCountChart } from './PrCountChart';
 import { DevDayDeveloperList } from './DevDayDeveloperChart';
+import { useBatchPullRequests } from './hooks/useBatchPullRequests';
+import { MetricsCalculator } from './utils/metricsCalculator';
 
 ChartJS.register(
   CategoryScale,
@@ -23,14 +24,16 @@ ChartJS.register(
   Legend
 );
 
-
 export type Metrics = {
   sprintId: number,
   score: number,
 }
 
 export const Chart = () => {
-  const sprintList = GetSprintList()
+  const sprintList = GetSprintList();
+  
+  // バッチ化されたPull Requests取得（N+1クエリ問題解決）
+  const { data: sprintPullRequests, loading, error } = useBatchPullRequests(sprintList);
 
   const [untilFirstReviewedList, setUntilFirstReviewedList] = useState<Metrics[]>([]);
   const [untilLastApprovedList, setUntilLastApprovedList] = useState<Metrics[]>([]);
@@ -39,48 +42,44 @@ export const Chart = () => {
   const [devDayDeveloperList, setDevDayDeveloperList] = useState<Metrics[]>([]);
 
   useEffect(() => {
-    // スプリント毎のPRをチャートに反映する
-    sprintList.map((sprint) => {
-      // 1スプリント分のPRを取得
-      const prs = FetchPullRequests(sprint)
-      prs.then((prs) => prs.filter((pr) => !pr.branchName.startsWith("epic/"))) // epicブランチは除外する
-      .then((prs) => {
-        // PR数を計算
-        const prCount = prs.length
-        setPrCountList((prCountList) => [...prCountList, {sprintId: sprint.id, score: prCount}])
+    if (loading || error || sprintPullRequests.length === 0) return;
 
-        // Dev/Day/Developerを計算
-        const devDayDeveloper = prCount / sprint.members.length / 5
-        setDevDayDeveloperList((devDayDeveloperList) => [...devDayDeveloperList, {sprintId: sprint.id, score: devDayDeveloper}])
+    // バッチで取得したデータから各スプリントのメトリクスを一括計算
+    const allMetrics = sprintPullRequests.map(({ sprintId, pullRequests }) => {
+      const sprint = sprintList.find(s => s.id === sprintId);
+      if (!sprint) return null;
 
-        // レビューまでにかかった時間を計算
-        const untilFirstReviewed = prs
-          .map((pr) => (pr.firstReviewed.getTime() - pr.created.getTime()) / 1000)
-          .reduce((a, b) => a + b, 0) / prCount;
+      return MetricsCalculator.calculateSprintMetrics(sprintId, pullRequests, sprint);
+    }).filter(Boolean);
 
-        // 最後のapproveまでにかかった時間を計算
-        const untilLastApproved = prs
-          .map((pr) => (pr.lastApproved.getTime() - pr.firstReviewed.getTime()) / 1000)
-          .reduce((a, b) => a + b, 0) / prCount  
-  
-        // マージまでにかかった時間を計算
-        const untilMerged = prs
-          .map((pr) => (pr.merged.getTime() - pr.lastApproved.getTime()) / 1000)
-          .reduce((a, b) => a + b, 0) / prCount
+    // 計算結果を各状態に設定（1回のバッチ処理）
+    setUntilFirstReviewedList(allMetrics.map(m => m!.untilFirstReviewed));
+    setUntilLastApprovedList(allMetrics.map(m => m!.untilLastApproved));
+    setUntilMergedList(allMetrics.map(m => m!.untilMerged));
+    setPrCountList(allMetrics.map(m => m!.prCount));
+    setDevDayDeveloperList(allMetrics.map(m => m!.devDayDeveloper));
+  }, [sprintPullRequests, loading, error, sprintList]);
 
-        // これらの値をチャート用のデータに追加する
-        setUntilFirstReviewedList((untilFirstReviewedList) => [...untilFirstReviewedList, {sprintId: sprint.id, score: untilFirstReviewed}])
-        setUntilLastApprovedList((untilLastApprovedList) => [...untilLastApprovedList, {sprintId: sprint.id, score: untilLastApproved}])
-        setUntilMergedList((untilMergedList) => [...untilMergedList, {sprintId: sprint.id, score: untilMerged}])
-      })
-    })
-}, []);
+  // ローディング中の表示
+  if (loading) {
+    return <div>Loading metrics...</div>;
+  }
 
-return (
+  // エラー時の表示
+  if (error) {
+    return <div>Error loading metrics: {error}</div>;
+  }
+
+  return (
     <>
-      <MetricsChart sprintList={sprintList} untilFirstReviewedList={untilFirstReviewedList} untilLastApprovedList={untilLastApprovedList} untilMergedList={untilMergedList} />
+      <MetricsChart 
+        sprintList={sprintList} 
+        untilFirstReviewedList={untilFirstReviewedList} 
+        untilLastApprovedList={untilLastApprovedList} 
+        untilMergedList={untilMergedList} 
+      />
       <PrCountChart sprintList={sprintList} prCountList={prCountList} />
       <DevDayDeveloperList sprintList={sprintList} devDayDeveloperList={devDayDeveloperList} />
     </>
-  )
+  );
 };
