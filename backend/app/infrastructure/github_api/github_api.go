@@ -2,6 +2,7 @@ package github_api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	prDomain "github-stats-metrics/domain/pull_request"
 	"log"
@@ -19,18 +20,30 @@ type repository struct {
 
 // NewRepository はGitHub APIを使用するRepository実装を作成
 func NewRepository() prDomain.Repository {
+	client, err := createClient()
+	if err != nil {
+		log.Printf("Failed to create GitHub client: %v", err)
+		// エラーを含むリポジトリを返す（実行時にエラーを返す）
+		return &repository{client: nil}
+	}
 	return &repository{
-		client: createClient(),
+		client: client,
 	}
 }
 
-func createClient() *githubv4.Client {
+func createClient() (*githubv4.Client, error) {
+	// GitHubトークンの存在確認
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return nil, errors.New("GITHUB_TOKEN environment variable is not set")
+	}
+	
 	// 認証トークンを使ったクライアントを生成する
 	src := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+		&oauth2.Token{AccessToken: token},
 	)
 	httpClient := oauth2.NewClient(context.Background(), src)
-	return githubv4.NewClient(httpClient)
+	return githubv4.NewClient(httpClient), nil
 }
 
 type graphqlQuery struct {
@@ -54,6 +67,11 @@ type graphqlQuery struct {
 
 // GetPullRequests はGitHub APIからPull Requestsを取得
 func (r *repository) GetPullRequests(ctx context.Context, req prDomain.GetPullRequestsRequest) ([]prDomain.PullRequest, error) {
+	// クライアント初期化チェック
+	if r.client == nil {
+		return nil, errors.New("GitHub client is not initialized - check GITHUB_TOKEN environment variable")
+	}
+	
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
@@ -80,8 +98,7 @@ func (r *repository) fetchPullRequests(ctx context.Context, queryParametes prDom
 	for {
 		// GithubAPIv4にアクセス
 		if err := client.Query(ctx, &query, variables); err != nil {
-			log.Printf("GitHub API query failed: %v", err)
-			return nil, fmt.Errorf("github api query failed: %w", err)
+			return nil, r.handleGitHubAPIError(err)
 		}
 
 		// 検索結果をDomainモデルに変換
@@ -154,6 +171,46 @@ func (r *repository) GetDevelopers(ctx context.Context, repositories []string) (
 	// 実際の実装では、GitHub APIから開発者一覧を取得
 	// 現在は設定ベースで実装
 	return []string{"developer1", "developer2", "developer3"}, nil
+}
+
+// handleGitHubAPIError はGitHub APIエラーを適切に分類して返す
+func (r *repository) handleGitHubAPIError(err error) error {
+	errorMsg := err.Error()
+	
+	// 認証エラーの判定
+	if strings.Contains(errorMsg, "401") || 
+	   strings.Contains(errorMsg, "Bad credentials") ||
+	   strings.Contains(errorMsg, "requires authentication") {
+		log.Printf("GitHub authentication failed: %v", err)
+		return fmt.Errorf("GitHub authentication failed - check GITHUB_TOKEN validity: %w", err)
+	}
+	
+	// レート制限エラーの判定
+	if strings.Contains(errorMsg, "rate limit") || 
+	   strings.Contains(errorMsg, "403") ||
+	   strings.Contains(errorMsg, "API rate limit exceeded") {
+		log.Printf("GitHub rate limit exceeded: %v", err)
+		return fmt.Errorf("GitHub rate limit exceeded - please wait and try again: %w", err)
+	}
+	
+	// 権限エラーの判定
+	if strings.Contains(errorMsg, "forbidden") || 
+	   strings.Contains(errorMsg, "access denied") {
+		log.Printf("GitHub access denied: %v", err)
+		return fmt.Errorf("GitHub access denied - check repository permissions: %w", err)
+	}
+	
+	// ネットワーク関連エラーの判定
+	if strings.Contains(errorMsg, "connection") || 
+	   strings.Contains(errorMsg, "timeout") ||
+	   strings.Contains(errorMsg, "network") {
+		log.Printf("GitHub network error: %v", err)
+		return fmt.Errorf("GitHub network error - check internet connection: %w", err)
+	}
+	
+	// その他のエラー
+	log.Printf("GitHub API error: %v", err)
+	return fmt.Errorf("GitHub API error: %w", err)
 }
 
 // debugPrintf はPullRequest型の構造体の中身をデバッグ表示する
