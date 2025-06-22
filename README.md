@@ -3,6 +3,7 @@
 > GitHub開発メトリクスの可視化・分析ツール
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Docker](https://img.shields.io/badge/Docker-supported-2496ED.svg?logo=docker)
 ![React](https://img.shields.io/badge/React-18-61DAFB.svg?logo=react)
 ![TypeScript](https://img.shields.io/badge/TypeScript-latest-3178C6.svg?logo=typescript)
 ![Go](https://img.shields.io/badge/Go-1.21-00ADD8.svg?logo=go)
@@ -33,32 +34,27 @@ GitHub Stats Metricsは、GitHubのPull Requestsデータを分析し、開発�
 
 ## 🚀 クイックスタート
 
-### インストール
+### Docker を使用した起動（推奨）
 
 ```bash
 # リポジトリのクローン
 git clone https://github.com/y-oga-819/github-stats-metrics.git
 cd github-stats-metrics
 
-# バックエンド
-cd backend/app
-go mod download
-
-# フロントエンド
-cd ../../frontend
-npm install
+# Docker Compose で起動
+docker-compose up
 ```
 
-### 起動
+### 手動インストール・起動
 
 ```bash
-# バックエンド起動 (ターミナル1)
-cd backend/app
-go run cmd/main.go
+# 依存関係インストール
+cd backend/app && go mod download
+cd ../../frontend && npm install
 
-# フロントエンド起動 (ターミナル2)
-cd frontend
-npm start
+# 起動 (2つのターミナルが必要)
+cd backend/app && go run cmd/main.go  # ターミナル1
+cd frontend && npm start              # ターミナル2
 ```
 
 ### アクセス
