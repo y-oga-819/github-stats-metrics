@@ -29,7 +29,7 @@ type graphqlQuery struct {
 			EndCursor   githubv4.String
 		}
 		Nodes []struct {
-			Pr prDomain.PullRequest `graphql:"... on PullRequest"`
+			Pr githubv4PullRequest `graphql:"... on PullRequest"`
 		}
 	} `graphql:"search(type: $searchType, first: 100, after: $cursor, query: $query)"`
 	RateLimit struct {
@@ -40,8 +40,7 @@ type graphqlQuery struct {
 	}
 }
 
-// GithubAPIv4の解説：https://zenn.dev/hsaki/articles/github-graphql
-// Golangで GithubAPIv4を使うならこのライブラリを使う：https://github.com/shurcooL/githubv4
+// Fetch はGitHub APIからPull Requestsを取得してDomainモデルに変換
 func Fetch(queryParametes prDomain.GetPullRequestsRequest) []prDomain.PullRequest {
 	// 認証を通したHTTP Clientを作成
 	client := createClient()
@@ -60,13 +59,14 @@ func Fetch(queryParametes prDomain.GetPullRequestsRequest) []prDomain.PullReques
 	for {
 		// GithubAPIv4にアクセス
 		if err := client.Query(context.Background(), &query, variables); err != nil {
-			log.Fatal(err)
+			log.Printf("GitHub API query failed: %v", err)
+			return nil
 		}
 
-		// 検索結果を詰め替え
+		// 検索結果をDomainモデルに変換
 		for _, node := range query.Search.Nodes {
-			array = append(array, node.Pr)
-			// debugPrintf(node.Pr)
+			domainPR := convertToDomain(node.Pr)
+			array = append(array, domainPR)
 		}
 
 		// 取得数をカウント
@@ -107,14 +107,19 @@ func createQuery(startDate string, endDate string, developers []string) string {
 	return query
 }
 
-// PullRequest型の構造体の中身をデバッグ表示する
+// debugPrintf はPullRequest型の構造体の中身をデバッグ表示する
 func debugPrintf(pr prDomain.PullRequest) {
-	// fmt.Printf("%+v\n", pr)
 	fmt.Print("------------------------------------------------------------\n")
-	fmt.Printf("%s\n", pr.Title)
-	fmt.Printf("%s\n", pr.URL)
+	fmt.Printf("Title: %s\n", pr.Title)
+	fmt.Printf("URL: %s\n", pr.URL)
 	fmt.Printf("CreatedAt: %s\n", pr.CreatedAt)
-	fmt.Printf("FirstReviewed: %s\n", pr.FirstReviewed.Nodes[0].CreatedAt)
-	fmt.Printf("LastApprovedAt: %s\n", pr.LastApprovedAt.Nodes[0].CreatedAt)
-	fmt.Printf("MergedAt: %s\n", pr.MergedAt)
+	if pr.FirstReviewed != nil {
+		fmt.Printf("FirstReviewed: %s\n", *pr.FirstReviewed)
+	}
+	if pr.LastApproved != nil {
+		fmt.Printf("LastApproved: %s\n", *pr.LastApproved)
+	}
+	if pr.MergedAt != nil {
+		fmt.Printf("MergedAt: %s\n", *pr.MergedAt)
+	}
 }

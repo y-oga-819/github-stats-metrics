@@ -1,33 +1,68 @@
 package pull_request
 
-import "github.com/shurcooL/githubv4"
+import (
+	"time"
+)
 
 type PullRequest struct {
-	Id          githubv4.String
-	Number      githubv4.Int
-	Title       githubv4.String
-	BaseRefName githubv4.String
-	HeadRefName githubv4.String
-	Author      struct {
-		Login     githubv4.String
-		AvatarURL githubv4.URI `graphql:"avatarUrl(size:72)"`
+	ID          string
+	Number      int
+	Title       string
+	BaseRefName string
+	HeadRefName string
+	Author      Author
+	Repository  Repository
+	URL         string
+	Additions   int
+	Deletions   int
+	CreatedAt   time.Time
+	FirstReviewed *time.Time
+	LastApproved  *time.Time
+	MergedAt     *time.Time
+}
+
+type Author struct {
+	Login     string
+	AvatarURL string
+}
+
+type Repository struct {
+	Name string
+}
+
+// ドメインロジック
+func (pr PullRequest) IsReviewed() bool {
+	return pr.FirstReviewed != nil
+}
+
+func (pr PullRequest) IsApproved() bool {
+	return pr.LastApproved != nil
+}
+
+func (pr PullRequest) IsMerged() bool {
+	return pr.MergedAt != nil
+}
+
+func (pr PullRequest) ReviewTime() *time.Duration {
+	if pr.FirstReviewed == nil {
+		return nil
 	}
-	Repository struct {
-		Name githubv4.String
+	duration := pr.FirstReviewed.Sub(pr.CreatedAt)
+	return &duration
+}
+
+func (pr PullRequest) ApprovalTime() *time.Duration {
+	if pr.FirstReviewed == nil || pr.LastApproved == nil {
+		return nil
 	}
-	URL           githubv4.URI
-	Additions     githubv4.Int
-	Deletions     githubv4.Int
-	CreatedAt     githubv4.DateTime
-	FirstReviewed struct {
-		Nodes []struct {
-			CreatedAt githubv4.DateTime
-		}
-	} `graphql:"FirstReviewed: reviews(first: 1)"`
-	LastApprovedAt struct {
-		Nodes []struct {
-			CreatedAt githubv4.DateTime
-		}
-	} `graphql:"LastApprovedAt: reviews(last: 1, states: APPROVED)"`
-	MergedAt githubv4.DateTime
+	duration := pr.LastApproved.Sub(*pr.FirstReviewed)
+	return &duration
+}
+
+func (pr PullRequest) MergeTime() *time.Duration {
+	if pr.LastApproved == nil || pr.MergedAt == nil {
+		return nil
+	}
+	duration := pr.MergedAt.Sub(*pr.LastApproved)
+	return &duration
 }
