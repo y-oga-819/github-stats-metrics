@@ -11,7 +11,7 @@ type PullRequest struct {
 	BaseRefName string
 	HeadRefName string
 	Author      Author
-	Repository  Repository
+	Repository  RepositoryInfo
 	URL         string
 	Additions   int
 	Deletions   int
@@ -26,7 +26,7 @@ type Author struct {
 	AvatarURL string
 }
 
-type Repository struct {
+type RepositoryInfo struct {
 	Name string
 }
 

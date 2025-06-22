@@ -48,12 +48,12 @@ func convertToDomain(apiPR githubv4PullRequest) domain.PullRequest {
 		HeadRefName: string(apiPR.HeadRefName),
 		Author: domain.Author{
 			Login:     string(apiPR.Author.Login),
-			AvatarURL: string(apiPR.Author.AvatarURL),
+			AvatarURL: apiPR.Author.AvatarURL.String(),
 		},
-		Repository: domain.Repository{
+		Repository: domain.RepositoryInfo{
 			Name: string(apiPR.Repository.Name),
 		},
-		URL:       string(apiPR.URL),
+		URL:       apiPR.URL.String(),
 		Additions: int(apiPR.Additions),
 		Deletions: int(apiPR.Deletions),
 		CreatedAt: apiPR.CreatedAt.Time,
