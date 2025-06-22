@@ -86,7 +86,6 @@ func (h *Handler) handleUseCaseError(w http.ResponseWriter, err error) {
 // respondSuccess は成功レスポンスを返却
 func (h *Handler) respondSuccess(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 本番では適切に設定
 	
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.respondError(w, http.StatusInternalServerError, "Failed to encode response", err)
@@ -96,7 +95,6 @@ func (h *Handler) respondSuccess(w http.ResponseWriter, data interface{}) {
 // respondError はエラーレスポンスを返却
 func (h *Handler) respondError(w http.ResponseWriter, statusCode int, message string, err error) {
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // 本番では適切に設定
 	w.WriteHeader(statusCode)
 	
 	errorResponse := ErrorResponse{
