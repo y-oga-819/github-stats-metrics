@@ -31,53 +31,7 @@ GitHub Stats Metricsは、GitHubのPull Requestsデータを分析し、開発�
 
 ## 🚀 セットアップ
 
-### 前提条件
-- Node.js 16+ 
-- Go 1.21+
-- GitHub Personal Access Token
-
-### インストール
-
-1. **リポジトリのクローン**
-```bash
-git clone https://github.com/y-oga-819/github-stats-metrics.git
-cd github-stats-metrics
-```
-
-2. **バックエンドセットアップ**
-```bash
-cd backend/app
-
-# 環境変数設定
-cp .env.example .env
-# .envファイルを編集してGITHUB_TOKENを設定
-
-# 依存関係インストール
-go mod download
-
-# 実行
-go run cmd/main.go
-```
-
-3. **フロントエンドセットアップ**
-```bash
-cd frontend
-
-# 依存関係インストール
-npm install
-
-# 開発サーバー起動
-npm start
-```
-
-### 環境変数
-
-**.env設定例**
-```bash
-GITHUB_TOKEN=your_github_personal_access_token
-GITHUB_GRAPHQL_SEARCH_QUERY_TARGET_REPOSITORIES=repo1,repo2,repo3
-ALLOWED_ORIGINS=http://localhost:3000
-```
+詳細なセットアップ手順については、[セットアップガイド](./docs/SETUP.md)を参照してください。
 
 
 ## 📄 ライセンス
