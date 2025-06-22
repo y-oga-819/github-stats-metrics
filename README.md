@@ -3,6 +3,10 @@
 > GitHub開発メトリクスの可視化・分析ツール
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![React](https://img.shields.io/badge/React-18-61DAFB.svg?logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-latest-3178C6.svg?logo=typescript)
+![Go](https://img.shields.io/badge/Go-1.21-00ADD8.svg?logo=go)
+![Node.js](https://img.shields.io/badge/Node.js-16+-339933.svg?logo=node.js)
 
 ## 🎯 概要
 
@@ -19,13 +23,11 @@ GitHub Stats Metricsは、GitHubのPull Requestsデータを分析し、開発�
 ## 🛠️ 技術スタック
 
 **フロントエンド**
-- React 18 + TypeScript
 - Chart.js (データ可視化)
 - React Router (ナビゲーション)
 - Tailwind CSS (スタイリング)
 
 **バックエンド**
-- Go 1.21
 - Gorilla Mux (HTTPルーティング)
 - GitHub GraphQL API v4
 
