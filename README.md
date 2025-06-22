@@ -34,8 +34,6 @@ GitHub Stats Metricsは、GitHubのPull Requestsデータを分析し、開発�
 
 ## 🚀 クイックスタート
 
-### Docker を使用した起動（推奨）
-
 ```bash
 # リポジトリのクローン
 git clone https://github.com/y-oga-819/github-stats-metrics.git
@@ -43,18 +41,6 @@ cd github-stats-metrics
 
 # Docker Compose で起動
 docker-compose up
-```
-
-### 手動インストール・起動
-
-```bash
-# 依存関係インストール
-cd backend/app && go mod download
-cd ../../frontend && npm install
-
-# 起動 (2つのターミナルが必要)
-cd backend/app && go run cmd/main.go  # ターミナル1
-cd frontend && npm start              # ターミナル2
 ```
 
 ### アクセス
