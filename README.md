@@ -31,7 +31,40 @@ GitHub Stats Metricsは、GitHubのPull Requestsデータを分析し、開発�
 - Gorilla Mux (HTTPルーティング)
 - GitHub GraphQL API v4
 
-## 🚀 セットアップ
+## 🚀 クイックスタート
+
+### インストール
+
+```bash
+# リポジトリのクローン
+git clone https://github.com/y-oga-819/github-stats-metrics.git
+cd github-stats-metrics
+
+# バックエンド
+cd backend/app
+go mod download
+
+# フロントエンド
+cd ../../frontend
+npm install
+```
+
+### 起動
+
+```bash
+# バックエンド起動 (ターミナル1)
+cd backend/app
+go run cmd/main.go
+
+# フロントエンド起動 (ターミナル2)
+cd frontend
+npm start
+```
+
+### アクセス
+
+- フロントエンド: http://localhost:3000
+- バックエンド: http://localhost:8080
 
 詳細なセットアップ手順については、[セットアップガイド](./docs/SETUP.md)を参照してください。
 
