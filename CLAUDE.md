@@ -15,11 +15,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 詳細手順
 
 #### 1. ブランチ作成
+
+**基本パターン（mainから派生）**:
 ```bash
 git checkout main
 git pull origin main
 git checkout -b [category]/[feature-name]
 ```
+
+**依存関係がある場合（既存ブランチから派生）**:
+```bash
+git checkout [base-branch]
+git pull origin [base-branch]
+git checkout -b [category]/[feature-name]
+```
+
+**ブランチ選択の判断基準**:
+- **mainから派生**: 独立した機能・修正の場合
+- **既存ブランチから派生**: 以下の場合
+  - 未マージブランチの機能に依存する作業
+  - 同一機能の段階的実装
+  - 前の作業の続きや改良
+  - 連続する作業の流れがある場合
+
+**依存関係がある場合の対応方針**:
+1. 作業を中断せず、既存ブランチから派生して継続
+2. PR作成時に依存関係を明記
+3. マージ順序の調整はユーザーが判断
 
 **ブランチ命名規則**:
 - `feature/[機能名]` - 新機能追加
@@ -57,8 +79,14 @@ gh pr create --title "[タイトル]" --body "[詳細説明]"
 **PRテンプレート構成**:
 - Summary: 変更概要
 - 主要な変更点
+- 依存関係: 他PRへの依存がある場合は明記
 - Test plan: テスト/確認事項
 - 🤖 Generated with [Claude Code] 署名
+
+**依存関係があるPRの場合**:
+- ベースブランチを明記: "depends on PR #XX"
+- マージ順序の指示: "Merge after PR #XX"
+- 影響範囲の説明: 依存する機能との関係性
 
 ## Development Commands
 
