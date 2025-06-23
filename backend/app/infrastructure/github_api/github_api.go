@@ -6,8 +6,10 @@ import (
 	"fmt"
 	prDomain "github-stats-metrics/domain/pull_request"
 	"log"
+	"math"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/shurcooL/githubv4"
 	"golang.org/x/oauth2"
@@ -95,9 +97,18 @@ func (r *repository) fetchPullRequests(ctx context.Context, queryParametes prDom
 	array := make([]prDomain.PullRequest, 0, 1)
 	prCount := 0
 
+	retryCount := 0
+	maxRetries := 3
+
 	for {
-		// GithubAPIv4にアクセス
-		if err := client.Query(ctx, &query, variables); err != nil {
+		// レート制限チェックと待機
+		if err := r.checkRateLimit(ctx, &query); err != nil {
+			return nil, fmt.Errorf("rate limit check failed: %w", err)
+		}
+
+		// GithubAPIv4にアクセス（指数バックオフ付きリトライ）
+		err := r.queryWithRetry(ctx, client, &query, variables, &retryCount, maxRetries)
+		if err != nil {
 			return nil, r.handleGitHubAPIError(err)
 		}
 
@@ -116,14 +127,20 @@ func (r *repository) fetchPullRequests(ctx context.Context, queryParametes prDom
 		fmt.Printf("EndCursor: %s\n", query.Search.PageInfo.EndCursor)
 		fmt.Printf("RateLimit: %+v\n", query.RateLimit)
 
+		// レート制限情報をログに記録
+		r.logRateLimitInfo(query.RateLimit)
+
 		// データを全て取り切ったら終了
 		if !query.Search.PageInfo.HasNextPage {
 			fmt.Printf("取得したPR数: %d\n", prCount)
 			break
 		}
 
-		// まだ取れるなら取得済みデータまでカーソルを移動する
+		// 次のページへ
 		variables["cursor"] = githubv4.NewString(query.Search.PageInfo.EndCursor)
+		
+		// ページ間の適切な間隔を設ける
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	return array, nil
@@ -143,6 +160,133 @@ func createQuery(startDate string, endDate string, developers []string) string {
 
 	fmt.Println(query)
 	return query
+}
+
+// checkRateLimit はAPI呼び出し前にレート制限をチェック
+func (r *repository) checkRateLimit(ctx context.Context, query *graphqlQuery) error {
+	// 事前にレート制限情報を取得
+	tempQuery := struct {
+		RateLimit struct {
+			Cost      githubv4.Int
+			Limit     githubv4.Int
+			Remaining githubv4.Int
+			ResetAt   githubv4.DateTime
+		}
+	}{}
+	
+	if err := r.client.Query(ctx, &tempQuery, nil); err != nil {
+		log.Printf("Failed to check rate limit: %v", err)
+		return nil // レート制限チェックに失敗してもAPIコールは続行
+	}
+	
+	remaining := int(tempQuery.RateLimit.Remaining)
+	resetAt := tempQuery.RateLimit.ResetAt.Time
+	
+	// レート制限が少ない場合は警告
+	if remaining < 100 {
+		log.Printf("WARNING: GitHub API rate limit is low: %d remaining, resets at %v", 
+			remaining, resetAt)
+		
+		// レート制限が極端に少ない場合は待機
+		if remaining < 10 {
+			waitDuration := time.Until(resetAt)
+			if waitDuration > 0 && waitDuration < time.Hour {
+				log.Printf("Rate limit critically low, waiting %v until reset", waitDuration)
+				
+				select {
+				case <-time.After(waitDuration):
+					log.Println("Rate limit reset, continuing...")
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			}
+		}
+	}
+	
+	return nil
+}
+
+// queryWithRetry は指数バックオフ付きでクエリを実行
+func (r *repository) queryWithRetry(ctx context.Context, client *githubv4.Client, query *graphqlQuery, variables map[string]interface{}, retryCount *int, maxRetries int) error {
+	for *retryCount <= maxRetries {
+		err := client.Query(ctx, query, variables)
+		if err == nil {
+			*retryCount = 0 // 成功時はリトライカウントをリセット
+			return nil
+		}
+		
+		// リトライ可能なエラーかチェック
+		if !r.isRetryableError(err) {
+			return err
+		}
+		
+		*retryCount++
+		if *retryCount > maxRetries {
+			return fmt.Errorf("max retries (%d) exceeded: %w", maxRetries, err)
+		}
+		
+		// 指数バックオフで待機
+		backoffDuration := time.Duration(math.Pow(2, float64(*retryCount-1))) * time.Second
+		log.Printf("API call failed (attempt %d/%d), retrying in %v: %v", 
+			*retryCount, maxRetries, backoffDuration, err)
+		
+		select {
+		case <-time.After(backoffDuration):
+			// 待機完了、リトライ
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	
+	return fmt.Errorf("unexpected error in retry loop")
+}
+
+// isRetryableError はエラーがリトライ可能かを判定
+func (r *repository) isRetryableError(err error) bool {
+	errStr := strings.ToLower(err.Error())
+	
+	retryableErrors := []string{
+		"rate limit",
+		"timeout",
+		"connection reset",
+		"temporary failure",
+		"server error",
+		"503",
+		"502",
+		"500",
+	}
+	
+	for _, retryable := range retryableErrors {
+		if strings.Contains(errStr, retryable) {
+			return true
+		}
+	}
+	
+	return false
+}
+
+// logRateLimitInfo はレート制限情報をログに記録
+func (r *repository) logRateLimitInfo(rateLimit struct {
+	Cost      githubv4.Int
+	Limit     githubv4.Int
+	Remaining githubv4.Int
+	ResetAt   githubv4.DateTime
+}) {
+	remaining := int(rateLimit.Remaining)
+	limit := int(rateLimit.Limit)
+	cost := int(rateLimit.Cost)
+	resetAt := rateLimit.ResetAt.Time
+	
+	// レート制限の使用率を計算
+	usagePercent := float64(limit-remaining) / float64(limit) * 100
+	
+	log.Printf("GitHub API Rate Limit - Used: %.1f%% (%d/%d), Cost: %d, Reset: %v",
+		usagePercent, limit-remaining, limit, cost, resetAt.Format(time.RFC3339))
+	
+	// 警告レベルの判定
+	if remaining < 500 {
+		log.Printf("WARNING: GitHub API rate limit is getting low: %d remaining", remaining)
+	}
 }
 
 // GetPullRequestByID は特定IDのPull Requestを取得
