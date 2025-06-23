@@ -11,12 +11,15 @@ import (
 	
 	usecase "github-stats-metrics/application/pull_request"
 	domain "github-stats-metrics/domain/pull_request"
+	"github-stats-metrics/shared/errors"
+	"github-stats-metrics/shared/logger"
 )
 
 // Handler はPull Request APIのHTTPハンドラー
 type Handler struct {
-	useCase *usecase.UseCase
-	decoder *schema.Decoder
+	useCase      *usecase.UseCase
+	decoder      *schema.Decoder
+	errorHandler *errors.ErrorHandler
 }
 
 // NewHandler はHandlerのコンストラクタ
@@ -24,9 +27,14 @@ func NewHandler(useCase *usecase.UseCase) *Handler {
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true) // 不明なクエリパラメータを無視
 	
+	// 統一エラーハンドラーの初期化
+	logger := logger.NewStandardLogger()
+	errorHandler := errors.NewErrorHandler(logger)
+	
 	return &Handler{
-		useCase: useCase,
-		decoder: decoder,
+		useCase:      useCase,
+		decoder:      decoder,
+		errorHandler: errorHandler,
 	}
 }
 
@@ -35,7 +43,8 @@ func (h *Handler) GetPullRequests(w http.ResponseWriter, r *http.Request) {
 	// リクエスト解析
 	req, err := h.parseRequest(r)
 	if err != nil {
-		h.respondError(w, http.StatusBadRequest, "Invalid request parameters", err)
+		appErr := errors.NewValidationError(errors.ErrCodeInvalidRequest, "Invalid request parameters", err.Error())
+		h.errorHandler.HandleError(w, appErr)
 		return
 	}
 	
@@ -46,7 +55,7 @@ func (h *Handler) GetPullRequests(w http.ResponseWriter, r *http.Request) {
 	// UseCase呼び出し
 	pullRequests, err := h.useCase.GetPullRequests(ctx, *req)
 	if err != nil {
-		h.handleUseCaseError(w, err)
+		h.errorHandler.HandleError(w, err)
 		return
 	}
 	
@@ -65,48 +74,12 @@ func (h *Handler) parseRequest(r *http.Request) (*domain.GetPullRequestsRequest,
 	return req, nil
 }
 
-// handleUseCaseError はUseCase層のエラーを適切なHTTPレスポンスに変換
-func (h *Handler) handleUseCaseError(w http.ResponseWriter, err error) {
-	if useCaseErr, ok := err.(usecase.UseCaseError); ok {
-		switch useCaseErr.Type {
-		case usecase.ErrorTypeValidation:
-			h.respondError(w, http.StatusBadRequest, "Validation failed", err)
-		case usecase.ErrorTypeRepository:
-			h.respondError(w, http.StatusInternalServerError, "Data access failed", err)
-		case usecase.ErrorTypeBusinessRule:
-			h.respondError(w, http.StatusUnprocessableEntity, "Business rule violation", err)
-		default:
-			h.respondError(w, http.StatusInternalServerError, "Internal server error", err)
-		}
-	} else {
-		h.respondError(w, http.StatusInternalServerError, "Internal server error", err)
-	}
-}
-
 // respondSuccess は成功レスポンスを返却
 func (h *Handler) respondSuccess(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		h.respondError(w, http.StatusInternalServerError, "Failed to encode response", err)
+		appErr := errors.NewInternalError("Failed to encode response", err)
+		h.errorHandler.HandleError(w, appErr)
 	}
-}
-
-// respondError はエラーレスポンスを返却
-func (h *Handler) respondError(w http.ResponseWriter, statusCode int, message string, err error) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	
-	errorResponse := ErrorResponse{
-		Error:   message,
-		Details: err.Error(),
-	}
-	
-	json.NewEncoder(w).Encode(errorResponse)
-}
-
-// ErrorResponse はエラーレスポンスの構造
-type ErrorResponse struct {
-	Error   string `json:"error"`
-	Details string `json:"details,omitempty"`
 }

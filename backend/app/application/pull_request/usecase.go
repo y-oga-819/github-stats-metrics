@@ -5,6 +5,7 @@ import (
 	"log"
 
 	domain "github-stats-metrics/domain/pull_request"
+	"github-stats-metrics/shared/errors"
 )
 
 // UseCase はPull Request関連のビジネスロジックを統括
@@ -25,7 +26,7 @@ func NewUseCase(repo domain.Repository) *UseCase {
 func (uc *UseCase) GetPullRequests(ctx context.Context, req domain.GetPullRequestsRequest) ([]domain.PullRequest, error) {
 	// リクエストバリデーション
 	if err := req.Validate(); err != nil {
-		return nil, NewValidationError("invalid request parameters", err)
+		return nil, errors.NewValidationError(errors.ErrCodeInvalidRequest, "invalid request parameters", err.Error())
 	}
 	
 	log.Printf("Fetching pull requests for developers: %v, period: %s to %s", 
@@ -34,7 +35,7 @@ func (uc *UseCase) GetPullRequests(ctx context.Context, req domain.GetPullReques
 	// リポジトリから取得（抽象に依存）
 	pullRequests, err := uc.repo.GetPullRequests(ctx, req)
 	if err != nil {
-		return nil, NewRepositoryError("failed to fetch pull requests", err)
+		return nil, errors.NewRepositoryError(errors.ErrCodeExternalAPIError, "failed to fetch pull requests", err)
 	}
 
 	// ドメインサービスでビジネスルールを適用
@@ -63,12 +64,12 @@ func (uc *UseCase) GetPullRequestMetrics(ctx context.Context, req domain.GetPull
 func (uc *UseCase) GetAvailableDevelopers(ctx context.Context) ([]string, error) {
 	repos, err := uc.repo.GetRepositories(ctx)
 	if err != nil {
-		return nil, NewRepositoryError("failed to get target repositories", err)
+		return nil, errors.NewRepositoryError(errors.ErrCodeExternalAPIError, "failed to get target repositories", err)
 	}
 	
 	developers, err := uc.repo.GetDevelopers(ctx, repos)
 	if err != nil {
-		return nil, NewRepositoryError("failed to get developers", err)
+		return nil, errors.NewRepositoryError(errors.ErrCodeExternalAPIError, "failed to get developers", err)
 	}
 	
 	return developers, nil
@@ -78,18 +79,18 @@ func (uc *UseCase) GetAvailableDevelopers(ctx context.Context) ([]string, error)
 func (uc *UseCase) ValidateRequest(ctx context.Context, req domain.GetPullRequestsRequest) error {
 	// 基本バリデーション
 	if err := req.Validate(); err != nil {
-		return NewValidationError("basic validation failed", err)
+		return errors.NewValidationError(errors.ErrCodeInvalidRequest, "basic validation failed", err.Error())
 	}
 	
 	// 開発者リストの検証（ドメインサービスを使用）
 	if len(req.Developers) > 0 {
 		availableDevelopers, err := uc.GetAvailableDevelopers(ctx)
 		if err != nil {
-			return NewRepositoryError("failed to get available developers for validation", err)
+			return errors.NewRepositoryError(errors.ErrCodeExternalAPIError, "failed to get available developers for validation", err)
 		}
 		
 		if err := uc.service.ValidateDeveloperList(ctx, req.Developers, availableDevelopers); err != nil {
-			return NewValidationError("developer validation failed", err)
+			return errors.WrapDomainError(err)
 		}
 	}
 	
