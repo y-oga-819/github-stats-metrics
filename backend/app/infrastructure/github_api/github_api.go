@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	prDomain "github-stats-metrics/domain/pull_request"
+	"github-stats-metrics/shared/logger"
 	"log"
 	"math"
 	"os"
@@ -18,18 +19,24 @@ import (
 // repository はprDomain.Repositoryインターフェースの実装
 type repository struct {
 	client *githubv4.Client
+	logger *logger.LevelLogger
 }
 
 // NewRepository はGitHub APIを使用するRepository実装を作成
 func NewRepository() prDomain.Repository {
 	client, err := createClient()
+	levelLogger := logger.NewLevelLogger()
+	
 	if err != nil {
-		log.Printf("Failed to create GitHub client: %v", err)
+		levelLogger.Error("Failed to create GitHub client", "error", err)
 		// エラーを含むリポジトリを返す（実行時にエラーを返す）
-		return &repository{client: nil}
+		return &repository{client: nil, logger: levelLogger}
 	}
+	
+	levelLogger.Info("GitHub API client initialized successfully")
 	return &repository{
 		client: client,
+		logger: levelLogger,
 	}
 }
 
@@ -121,18 +128,18 @@ func (r *repository) fetchPullRequests(ctx context.Context, queryParametes prDom
 		// 取得数をカウント
 		prCount += len(query.Search.Nodes)
 
-		// API LIMIT などのデータをデバッグ表示
-		fmt.Print("\n------------------------------------------------------------\n")
-		fmt.Printf("HasNextPage: %t\n", query.Search.PageInfo.HasNextPage)
-		fmt.Printf("EndCursor: %s\n", query.Search.PageInfo.EndCursor)
-		fmt.Printf("RateLimit: %+v\n", query.RateLimit)
+		// API情報をデバッグレベルで表示
+		r.logger.Debug("GitHub API pagination info",
+			"hasNextPage", query.Search.PageInfo.HasNextPage,
+			"endCursor", query.Search.PageInfo.EndCursor,
+			"prCount", prCount)
 
 		// レート制限情報をログに記録
 		r.logRateLimitInfo(query.RateLimit)
 
 		// データを全て取り切ったら終了
 		if !query.Search.PageInfo.HasNextPage {
-			fmt.Printf("取得したPR数: %d\n", prCount)
+			r.logger.Info("GitHub API data fetch completed", "totalPullRequests", prCount)
 			break
 		}
 
@@ -158,7 +165,10 @@ func createQuery(startDate string, endDate string, developers []string) string {
 	// 開発者
 	query += "author:" + strings.Join(developers, " author:")
 
-	fmt.Println(query)
+	// デバッグレベルでクエリを出力
+	levelLogger := logger.NewLevelLogger()
+	levelLogger.Debug("GitHub GraphQL query generated", "query", query)
+	
 	return query
 }
 
@@ -175,7 +185,7 @@ func (r *repository) checkRateLimit(ctx context.Context, query *graphqlQuery) er
 	}{}
 	
 	if err := r.client.Query(ctx, &tempQuery, nil); err != nil {
-		log.Printf("Failed to check rate limit: %v", err)
+		r.logger.Warn("Failed to check rate limit", "error", err)
 		return nil // レート制限チェックに失敗してもAPIコールは続行
 	}
 	
@@ -184,18 +194,21 @@ func (r *repository) checkRateLimit(ctx context.Context, query *graphqlQuery) er
 	
 	// レート制限が少ない場合は警告
 	if remaining < 100 {
-		log.Printf("WARNING: GitHub API rate limit is low: %d remaining, resets at %v", 
-			remaining, resetAt)
+		r.logger.Warn("GitHub API rate limit is low", 
+			"remaining", remaining, 
+			"resetAt", resetAt.Format(time.RFC3339))
 		
 		// レート制限が極端に少ない場合は待機
 		if remaining < 10 {
 			waitDuration := time.Until(resetAt)
 			if waitDuration > 0 && waitDuration < time.Hour {
-				log.Printf("Rate limit critically low, waiting %v until reset", waitDuration)
+				r.logger.Error("Rate limit critically low, waiting until reset",
+					"waitDuration", waitDuration,
+					"resetAt", resetAt.Format(time.RFC3339))
 				
 				select {
 				case <-time.After(waitDuration):
-					log.Println("Rate limit reset, continuing...")
+					r.logger.Info("Rate limit reset, continuing API calls")
 				case <-ctx.Done():
 					return ctx.Err()
 				}
@@ -227,8 +240,11 @@ func (r *repository) queryWithRetry(ctx context.Context, client *githubv4.Client
 		
 		// 指数バックオフで待機
 		backoffDuration := time.Duration(math.Pow(2, float64(*retryCount-1))) * time.Second
-		log.Printf("API call failed (attempt %d/%d), retrying in %v: %v", 
-			*retryCount, maxRetries, backoffDuration, err)
+		r.logger.Warn("API call failed, retrying with backoff",
+			"attempt", *retryCount,
+			"maxRetries", maxRetries,
+			"backoffDuration", backoffDuration,
+			"error", err)
 		
 		select {
 		case <-time.After(backoffDuration):
@@ -280,12 +296,18 @@ func (r *repository) logRateLimitInfo(rateLimit struct {
 	// レート制限の使用率を計算
 	usagePercent := float64(limit-remaining) / float64(limit) * 100
 	
-	log.Printf("GitHub API Rate Limit - Used: %.1f%% (%d/%d), Cost: %d, Reset: %v",
-		usagePercent, limit-remaining, limit, cost, resetAt.Format(time.RFC3339))
+	r.logger.Debug("GitHub API Rate Limit status",
+		"usagePercent", fmt.Sprintf("%.1f%%", usagePercent),
+		"used", limit-remaining,
+		"limit", limit,
+		"cost", cost,
+		"resetAt", resetAt.Format(time.RFC3339))
 	
 	// 警告レベルの判定
 	if remaining < 500 {
-		log.Printf("WARNING: GitHub API rate limit is getting low: %d remaining", remaining)
+		r.logger.Warn("GitHub API rate limit is getting low", 
+			"remaining", remaining,
+			"resetAt", resetAt.Format(time.RFC3339))
 	}
 }
 
