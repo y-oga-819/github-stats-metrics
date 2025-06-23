@@ -11,6 +11,7 @@ import (
 	githubRepository "github-stats-metrics/infrastructure/github_api"
 	todoUseCase "github-stats-metrics/application/todo"
 	todoHandler "github-stats-metrics/presentation/todo"
+	healthHandler "github-stats-metrics/presentation/health"
 	memoryRepository "github-stats-metrics/infrastructure/memory"
 )
 
@@ -31,9 +32,13 @@ func StartWebServer() error {
 	todoUseCaseInstance := todoUseCase.NewUseCase(todoRepository)
 	todoHandlerInstance := todoHandler.NewHandler(todoUseCaseInstance)
 	
+	// Health関連の依存関係
+	healthHandlerInstance := healthHandler.NewHandler()
+	
 	r := mux.NewRouter().StrictSlash(true)
 
-	// URL に呼び出したい関数を登録
+	// APIエンドポイントの登録
+	r.HandleFunc("/health", healthHandlerInstance.GetHealth).Methods("GET")
 	r.HandleFunc("/api/todos", todoHandlerInstance.GetTodos).Methods("GET")
 	r.HandleFunc("/api/pull_requests", prHandler.GetPullRequests).Methods("GET")
 
