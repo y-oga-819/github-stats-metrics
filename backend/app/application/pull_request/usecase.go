@@ -9,13 +9,15 @@ import (
 
 // UseCase はPull Request関連のビジネスロジックを統括
 type UseCase struct {
-	repo domain.Repository
+	repo    domain.Repository
+	service *domain.PullRequestService
 }
 
 // NewUseCase はUseCaseのコンストラクタ（依存性注入）
 func NewUseCase(repo domain.Repository) *UseCase {
 	return &UseCase{
-		repo: repo,
+		repo:    repo,
+		service: domain.NewPullRequestService(),
 	}
 }
 
@@ -35,44 +37,26 @@ func (uc *UseCase) GetPullRequests(ctx context.Context, req domain.GetPullReques
 		return nil, NewRepositoryError("failed to fetch pull requests", err)
 	}
 
-	// ビジネスルールの適用（例：epicブランチの除外）
-	filtered := uc.applyBusinessRules(pullRequests)
+	// ドメインサービスでビジネスルールを適用
+	filtered := uc.service.FilterByBusinessRules(pullRequests)
 
 	log.Printf("Retrieved %d pull requests (filtered from %d)", len(filtered), len(pullRequests))
 	return filtered, nil
 }
 
-// applyBusinessRules はビジネスルールを適用してPRをフィルタリング
-func (uc *UseCase) applyBusinessRules(pullRequests []domain.PullRequest) []domain.PullRequest {
-	var filtered []domain.PullRequest
-	
-	for _, pr := range pullRequests {
-		if !uc.shouldExcludePR(pr) {
-			filtered = append(filtered, pr)
-		}
+// GetPullRequestMetrics はPull Requestsのメトリクスを取得
+func (uc *UseCase) GetPullRequestMetrics(ctx context.Context, req domain.GetPullRequestsRequest) (domain.PullRequestMetrics, error) {
+	// Pull Requestsを取得
+	pullRequests, err := uc.GetPullRequests(ctx, req)
+	if err != nil {
+		return domain.PullRequestMetrics{}, err
 	}
 	
-	return filtered
-}
-
-// shouldExcludePR はPRを除外すべきかを判定するビジネスルール
-func (uc *UseCase) shouldExcludePR(pr domain.PullRequest) bool {
-	// ルール1: epicブランチは除外
-	if isEpicBranch(pr.HeadRefName) {
-		return true
-	}
+	// ドメインサービスでメトリクスを計算
+	metrics := uc.service.CalculateMetrics(pullRequests)
 	
-	// ルール2: マージされていないPRは除外
-	if !pr.IsMerged() {
-		return true
-	}
-	
-	return false
-}
-
-// isEpicBranch はepicブランチかを判定
-func isEpicBranch(branchName string) bool {
-	return len(branchName) > 5 && branchName[:5] == "epic/"
+	log.Printf("Calculated metrics for %d pull requests", metrics.TotalPullRequests)
+	return metrics, nil
 }
 
 // GetAvailableDevelopers は利用可能な開発者一覧を取得
@@ -88,4 +72,26 @@ func (uc *UseCase) GetAvailableDevelopers(ctx context.Context) ([]string, error)
 	}
 	
 	return developers, nil
+}
+
+// ValidateRequest はリクエストの高度なバリデーションを実行
+func (uc *UseCase) ValidateRequest(ctx context.Context, req domain.GetPullRequestsRequest) error {
+	// 基本バリデーション
+	if err := req.Validate(); err != nil {
+		return NewValidationError("basic validation failed", err)
+	}
+	
+	// 開発者リストの検証（ドメインサービスを使用）
+	if len(req.Developers) > 0 {
+		availableDevelopers, err := uc.GetAvailableDevelopers(ctx)
+		if err != nil {
+			return NewRepositoryError("failed to get available developers for validation", err)
+		}
+		
+		if err := uc.service.ValidateDeveloperList(ctx, req.Developers, availableDevelopers); err != nil {
+			return NewValidationError("developer validation failed", err)
+		}
+	}
+	
+	return nil
 }
