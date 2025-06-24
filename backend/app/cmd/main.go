@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
+	"os"
 
 	"github-stats-metrics/server"
 	"github-stats-metrics/shared/config"
+	"github-stats-metrics/shared/logging"
+	"github-stats-metrics/shared/metrics"
+	"github-stats-metrics/shared/monitoring"
 
 	"github.com/joho/godotenv"
 )
@@ -21,9 +26,39 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// server パッケージから StartWebServer を呼び出す
-	err = server.StartWebServer(cfg)
+	// 構造化ロガーを初期化
+	logLevel, err := logging.ParseLogLevel(cfg.Logging.Level)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Invalid log level %s, using INFO", cfg.Logging.Level)
+		logLevel = logging.INFO
+	}
+	
+	logger := logging.NewStructuredLogger(logLevel, "github-stats-metrics", "1.0.0")
+	ctx := context.Background()
+
+	// メトリクスコレクターを初期化
+	metricsCollector := metrics.NewMetricsCollector()
+	if err := metricsCollector.Register(); err != nil {
+		logger.Fatal(ctx, "Failed to register metrics", err)
+	}
+
+	// アプリケーション情報を設定
+	metricsCollector.SetApplicationInfo("1.0.0", "2024-06-24", "latest")
+
+	// ヘルスチェッカーを初期化
+	healthChecker := monitoring.NewHealthChecker(cfg)
+
+	logger.Info(ctx, "Starting GitHub Stats Metrics application", map[string]interface{}{
+		"version":    "1.0.0",
+		"log_level":  cfg.Logging.Level,
+		"server_host": cfg.Server.Host,
+		"server_port": cfg.Server.Port,
+	})
+
+	// server パッケージから StartWebServer を呼び出す
+	err = server.StartWebServer(cfg, logger, metricsCollector, healthChecker)
+	if err != nil {
+		logger.Fatal(ctx, "Failed to start web server", err)
+		os.Exit(1)
 	}
 }

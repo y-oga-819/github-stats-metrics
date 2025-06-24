@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -13,11 +14,18 @@ import (
 	todoHandler "github-stats-metrics/presentation/todo"
 	memoryRepository "github-stats-metrics/infrastructure/memory"
 	"github-stats-metrics/shared/config"
+	"github-stats-metrics/shared/logging"
+	"github-stats-metrics/shared/metrics"
+	"github-stats-metrics/shared/middleware"
+	"github-stats-metrics/shared/monitoring"
 )
 
-func StartWebServer(cfg *config.Config) error {
-	fmt.Println("Start Web Server!")
-	fmt.Printf("ex) http://localhost:%d/api/pull_requests\n", cfg.Server.Port)
+func StartWebServer(cfg *config.Config, logger *logging.StructuredLogger, metricsCollector *metrics.MetricsCollector, healthChecker *monitoring.HealthChecker) error {
+	ctx := context.Background()
+	
+	logger.Info(ctx, "Initializing web server", map[string]interface{}{
+		"listen_address": cfg.GetListenAddress(),
+	})
 	
 	// 依存関係の注入（Clean Architecture パターン）
 	// Infrastructure層 → Application層 → Presentation層の順で組み立て
@@ -34,12 +42,26 @@ func StartWebServer(cfg *config.Config) error {
 	
 	r := mux.NewRouter().StrictSlash(true)
 
-	// URL に呼び出したい関数を登録
+	// 監視エンドポイント
+	r.Handle("/metrics", metricsCollector.GetHandler()).Methods("GET")
+	r.HandleFunc("/health", healthChecker.Handler()).Methods("GET")
+
+	// API エンドポイント
 	r.HandleFunc("/api/todos", todoHandlerInstance.GetTodos).Methods("GET")
 	r.HandleFunc("/api/pull_requests", prHandler.GetPullRequests).Methods("GET")
 
-	// CORSミドルウェアを適用
+	// ミドルウェアの適用
 	handler := corsMiddleware(r, cfg)
+	handler = middleware.MetricsMiddleware(metricsCollector)(handler)
+
+	logger.Info(ctx, "Web server starting", map[string]interface{}{
+		"endpoints": []string{
+			"/api/todos",
+			"/api/pull_requests", 
+			"/health",
+			"/metrics",
+		},
+	})
 
 	// 設定からポートを取得してサーバーを起動
 	return http.ListenAndServe(cfg.GetListenAddress(), handler)

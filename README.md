@@ -48,6 +48,24 @@ docker-compose up
 - フロントエンド: http://localhost:3000
 - バックエンド: http://localhost:8080
 
+### 監視環境
+
+```bash
+# 監視スタック起動（Prometheus + Grafana + Loki）
+make monitoring
+
+# 監視サービスURL表示
+make monitoring-urls
+```
+
+#### 監視サービス
+
+- **Prometheus**: http://localhost:9090 (メトリクス収集)
+- **Grafana**: http://localhost:3001 (ダッシュボード - admin/admin123)
+- **Loki**: http://localhost:3100 (ログ集約)
+- **アプリメトリクス**: http://localhost:8080/metrics
+- **ヘルスチェック**: http://localhost:8080/health
+
 詳細なセットアップ手順については、[セットアップガイド](./docs/SETUP.md)を参照してください。
 
 

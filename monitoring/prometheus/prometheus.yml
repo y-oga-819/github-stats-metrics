@@ -1,0 +1,41 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus自体のメトリクス
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # アプリケーションメトリクス
+  - job_name: 'github-stats-metrics-backend'
+    static_configs:
+      - targets: ['backend:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # ヘルスチェック監視
+  - job_name: 'github-stats-metrics-health'
+    static_configs:
+      - targets: ['backend:8080']
+    metrics_path: '/health'
+    scrape_interval: 30s
+    scrape_timeout: 5s
+
+  # Node exporter (システムメトリクス、オプション)
+  # - job_name: 'node'
+  #   static_configs:
+  #     - targets: ['node-exporter:9100']
+
+# アラートマネージャー設定（オプション）
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           # - alertmanager:9093
