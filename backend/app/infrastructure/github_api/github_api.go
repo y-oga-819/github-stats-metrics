@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	prDomain "github-stats-metrics/domain/pull_request"
+	"github-stats-metrics/shared/config"
 	"log"
 	"os"
 	"strings"
@@ -16,26 +17,28 @@ import (
 // repository はprDomain.Repositoryインターフェースの実装
 type repository struct {
 	client *githubv4.Client
+	config *config.Config
 }
 
 // NewRepository はGitHub APIを使用するRepository実装を作成
-func NewRepository() prDomain.Repository {
-	client, err := createClient()
+func NewRepository(cfg *config.Config) prDomain.Repository {
+	client, err := createClient(cfg)
 	if err != nil {
 		log.Printf("Failed to create GitHub client: %v", err)
 		// エラーを含むリポジトリを返す（実行時にエラーを返す）
-		return &repository{client: nil}
+		return &repository{client: nil, config: cfg}
 	}
 	return &repository{
 		client: client,
+		config: cfg,
 	}
 }
 
-func createClient() (*githubv4.Client, error) {
-	// GitHubトークンの存在確認
-	token := os.Getenv("GITHUB_TOKEN")
+func createClient(cfg *config.Config) (*githubv4.Client, error) {
+	// 設定からGitHubトークンを取得
+	token := cfg.GitHub.Token
 	if token == "" {
-		return nil, errors.New("GITHUB_TOKEN environment variable is not set")
+		return nil, errors.New("GitHub token is not configured")
 	}
 	
 	// 認証トークンを使ったクライアントを生成する
@@ -89,7 +92,7 @@ func (r *repository) fetchPullRequests(ctx context.Context, queryParametes prDom
 	variables := map[string]interface{}{
 		"searchType": githubv4.SearchTypeIssue,
 		"cursor":     (*githubv4.String)(nil),
-		"query":      githubv4.String(createQuery(queryParametes.StartDate, queryParametes.EndDate, queryParametes.Developers)),
+		"query":      githubv4.String(r.createQuery(queryParametes.StartDate, queryParametes.EndDate, queryParametes.Developers)),
 	}
 
 	array := make([]prDomain.PullRequest, 0, 1)
@@ -110,15 +113,19 @@ func (r *repository) fetchPullRequests(ctx context.Context, queryParametes prDom
 		// 取得数をカウント
 		prCount += len(query.Search.Nodes)
 
-		// API LIMIT などのデータをデバッグ表示
-		fmt.Print("\n------------------------------------------------------------\n")
-		fmt.Printf("HasNextPage: %t\n", query.Search.PageInfo.HasNextPage)
-		fmt.Printf("EndCursor: %s\n", query.Search.PageInfo.EndCursor)
-		fmt.Printf("RateLimit: %+v\n", query.RateLimit)
+		// API LIMIT などのデータをデバッグ表示（デバッグモード時のみ）
+		if r.config.IsDebugMode() {
+			fmt.Print("\n------------------------------------------------------------\n")
+			fmt.Printf("HasNextPage: %t\n", query.Search.PageInfo.HasNextPage)
+			fmt.Printf("EndCursor: %s\n", query.Search.PageInfo.EndCursor)
+			fmt.Printf("RateLimit: %+v\n", query.RateLimit)
+		}
 
 		// データを全て取り切ったら終了
 		if !query.Search.PageInfo.HasNextPage {
-			fmt.Printf("取得したPR数: %d\n", prCount)
+			if r.config.IsDebugMode() {
+				fmt.Printf("取得したPR数: %d\n", prCount)
+			}
 			break
 		}
 
@@ -130,18 +137,20 @@ func (r *repository) fetchPullRequests(ctx context.Context, queryParametes prDom
 }
 
 // GitHub API v4 にリクエストするクエリの検索条件文字列を生成する
-func createQuery(startDate string, endDate string, developers []string) string {
+func (r *repository) createQuery(startDate string, endDate string, developers []string) string {
 	// 期間
 	query := fmt.Sprintf("merged:%s..%s ", startDate, endDate)
 
-	// リポジトリ
-	repositories := strings.Split(os.Getenv("GITHUB_GRAPHQL_SEARCH_QUERY_TARGET_REPOSITORIES"), ",")
+	// リポジトリ（設定から取得）
+	repositories := r.config.GetCleanRepositories()
 	query += "repo:" + strings.Join(repositories, " repo:") + " "
 
 	// 開発者
 	query += "author:" + strings.Join(developers, " author:")
 
-	fmt.Println(query)
+	if r.config.IsDebugMode() {
+		fmt.Println("GitHub query:", query)
+	}
 	return query
 }
 
