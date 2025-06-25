@@ -1,11 +1,19 @@
+<<<<<<< HEAD
 .PHONY: help dev prod build-dev build-prod up-dev up-prod down clean logs test monitoring
+=======
+.PHONY: help dev prod build-dev build-prod up-dev up-prod down clean logs test
+>>>>>>> main
 
 # Default target
 help: ## Show this help message
 	@echo 'Usage: make [target]'
 	@echo ''
 	@echo 'Targets:'
+<<<<<<< HEAD
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+=======
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+>>>>>>> main
 
 # Development targets
 dev: build-dev up-dev ## Build and start development environment
@@ -25,6 +33,7 @@ build-prod: ## Build production containers
 up-prod: ## Start production environment
 	docker-compose -f docker-compose.prod.yml up -d
 
+<<<<<<< HEAD
 # Monitoring targets
 monitoring: ## Start full monitoring stack (app + prometheus + grafana + loki)
 	docker-compose -f docker-compose.monitoring.yml up -d
@@ -51,16 +60,24 @@ monitoring-urls: ## Show monitoring service URLs
 	@echo "  Backend Health:  http://localhost:8080/health"
 	@echo "  Backend Metrics: http://localhost:8080/metrics"
 
+=======
+>>>>>>> main
 # General targets
 down: ## Stop all containers
 	docker-compose down
 	docker-compose -f docker-compose.prod.yml down
+<<<<<<< HEAD
 	docker-compose -f docker-compose.monitoring.yml down
+=======
+>>>>>>> main
 
 clean: ## Remove all containers and images
 	docker-compose down --rmi all --volumes --remove-orphans
 	docker-compose -f docker-compose.prod.yml down --rmi all --volumes --remove-orphans
+<<<<<<< HEAD
 	docker-compose -f docker-compose.monitoring.yml down --rmi all --volumes --remove-orphans
+=======
+>>>>>>> main
 
 logs: ## Show logs from all containers
 	docker-compose logs -f
@@ -74,8 +91,11 @@ health: ## Check health of all containers
 	@docker-compose ps
 	@echo "\nProduction containers:"
 	@docker-compose -f docker-compose.prod.yml ps
+<<<<<<< HEAD
 	@echo "\nMonitoring containers:"
 	@docker-compose -f docker-compose.monitoring.yml ps
+=======
+>>>>>>> main
 
 # Testing
 test-backend: ## Run backend tests

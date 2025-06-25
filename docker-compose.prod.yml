@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  backend:
+    container_name: prod-backend
+    build:
+      context: backend
+      dockerfile: ./Dockerfile
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_GRAPHQL_SEARCH_QUERY_TARGET_REPOSITORIES=${GITHUB_GRAPHQL_SEARCH_QUERY_TARGET_REPOSITORIES}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - SERVER_HOST=${SERVER_HOST:-0.0.0.0}
+      - SERVER_PORT=${SERVER_PORT:-8080}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    container_name: prod-frontend
+    build:
+      context: frontend
+      dockerfile: ./Dockerfile.prod
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  app-network:
+    driver: bridge
+
+# Optional: Add volumes for persistent data if needed
+# volumes:
+#   backend-data:
+#   frontend-data:
