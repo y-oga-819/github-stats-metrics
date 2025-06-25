@@ -3,7 +3,6 @@ package pull_request
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"time"
 )
 
@@ -433,3 +432,4 @@ const (
 	BottleneckTypeManyComments   BottleneckType = "many_comments"
 	BottleneckTypeLackOfReviewer BottleneckType = "lack_of_reviewer"
 )
+

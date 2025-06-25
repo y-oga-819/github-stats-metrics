@@ -19,7 +19,7 @@ func TestPullRequest_ReviewTime(t *testing.T) {
 				CreatedAt:     parseTime("2023-01-01T10:00:00Z"),
 				FirstReviewed: timePtr(parseTime("2023-01-01T12:00:00Z")),
 			},
-			expected: durationPtr(2 * time.Hour),
+			expected: durationPtr3(2 * time.Hour),
 		},
 		{
 			name: "FirstReviewedがnilの場合",
@@ -57,7 +57,7 @@ func TestPullRequest_ApprovalTime(t *testing.T) {
 				FirstReviewed: timePtr(parseTime("2023-01-01T12:00:00Z")),
 				LastApproved:  timePtr(parseTime("2023-01-01T14:00:00Z")),
 			},
-			expected: durationPtr(2 * time.Hour),
+			expected: durationPtr3(2 * time.Hour),
 		},
 		{
 			name: "FirstReviewedがnilの場合",
@@ -103,7 +103,7 @@ func TestPullRequest_MergeTime(t *testing.T) {
 				LastApproved: timePtr(parseTime("2023-01-01T14:00:00Z")),
 				MergedAt:     timePtr(parseTime("2023-01-01T15:00:00Z")),
 			},
-			expected: durationPtr(1 * time.Hour),
+			expected: durationPtr3(1 * time.Hour),
 		},
 		{
 			name: "LastApprovedがnilの場合",
@@ -193,6 +193,6 @@ func timePtr(t time.Time) *time.Time {
 	return &t
 }
 
-func durationPtr(d time.Duration) *time.Duration {
+func durationPtr3(d time.Duration) *time.Duration {
 	return &d
 }
