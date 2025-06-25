@@ -10,6 +10,7 @@ import (
 	analyticsApp "github-stats-metrics/application/analytics"
 	pullRequestUseCase "github-stats-metrics/application/pull_request"
 	pullRequestHandler "github-stats-metrics/presentation/pull_request"
+	analyticsHandler "github-stats-metrics/presentation/analytics"
 	githubRepository "github-stats-metrics/infrastructure/github_api"
 	"github-stats-metrics/infrastructure/repository"
 	todoUseCase "github-stats-metrics/application/todo"
@@ -42,6 +43,10 @@ func StartWebServer(cfg *config.Config, logger *logging.StructuredLogger, metric
 	metricsAggregator := analyticsApp.NewMetricsAggregator()
 	prMetricsHandler := pullRequestHandler.NewPRMetricsHandler(prMetricsRepo, metricsAggregator)
 	
+	// 集計データ関連の依存関係
+	aggregatedRepo := repository.NewAggregatedMetricsRepository(db)
+	analyticsHandlerInstance := analyticsHandler.NewAnalyticsHandler(aggregatedRepo, metricsAggregator)
+	
 	// Todo関連の依存関係
 	todoRepository := memoryRepository.NewTodoRepository()
 	todoUseCaseInstance := todoUseCase.NewUseCase(todoRepository)
@@ -59,6 +64,9 @@ func StartWebServer(cfg *config.Config, logger *logging.StructuredLogger, metric
 	
 	// PRメトリクス API ルートの登録
 	prMetricsHandler.RegisterRoutes(r)
+	
+	// 集計データ API ルートの登録
+	analyticsHandlerInstance.RegisterRoutes(r)
 
 	// ミドルウェアの適用
 	handler := corsMiddleware(r, cfg)
@@ -73,6 +81,10 @@ func StartWebServer(cfg *config.Config, logger *logging.StructuredLogger, metric
 			"/api/metrics/review_time",
 			"/api/developers/{developer}/metrics",
 			"/api/repositories/{repository}/metrics",
+			"/api/analytics/team_metrics",
+			"/api/analytics/developer_metrics",
+			"/api/analytics/repository_metrics",
+			"/api/analytics/trends",
 			"/health",
 			"/metrics",
 		},
