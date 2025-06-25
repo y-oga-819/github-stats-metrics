@@ -1,19 +1,11 @@
-<<<<<<< HEAD
-.PHONY: help dev prod build-dev build-prod up-dev up-prod down clean logs test monitoring
-=======
-.PHONY: help dev prod build-dev build-prod up-dev up-prod down clean logs test
->>>>>>> main
+.PHONY: help dev prod build-dev build-prod up-dev up-prod down clean logs test monitoring test-integration test-unit test-all lint-backend build-backend run-backend monitoring-build monitoring-down monitoring-logs monitoring-urls logs-prod health analyze-images prune
 
 # Default target
 help: ## Show this help message
 	@echo 'Usage: make [target]'
 	@echo ''
 	@echo 'Targets:'
-<<<<<<< HEAD
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-=======
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
->>>>>>> main
 
 # Development targets
 dev: build-dev up-dev ## Build and start development environment
@@ -33,7 +25,6 @@ build-prod: ## Build production containers
 up-prod: ## Start production environment
 	docker-compose -f docker-compose.prod.yml up -d
 
-<<<<<<< HEAD
 # Monitoring targets
 monitoring: ## Start full monitoring stack (app + prometheus + grafana + loki)
 	docker-compose -f docker-compose.monitoring.yml up -d
@@ -60,24 +51,16 @@ monitoring-urls: ## Show monitoring service URLs
 	@echo "  Backend Health:  http://localhost:8080/health"
 	@echo "  Backend Metrics: http://localhost:8080/metrics"
 
-=======
->>>>>>> main
 # General targets
 down: ## Stop all containers
 	docker-compose down
 	docker-compose -f docker-compose.prod.yml down
-<<<<<<< HEAD
 	docker-compose -f docker-compose.monitoring.yml down
-=======
->>>>>>> main
 
 clean: ## Remove all containers and images
 	docker-compose down --rmi all --volumes --remove-orphans
 	docker-compose -f docker-compose.prod.yml down --rmi all --volumes --remove-orphans
-<<<<<<< HEAD
 	docker-compose -f docker-compose.monitoring.yml down --rmi all --volumes --remove-orphans
-=======
->>>>>>> main
 
 logs: ## Show logs from all containers
 	docker-compose logs -f
@@ -91,11 +74,8 @@ health: ## Check health of all containers
 	@docker-compose ps
 	@echo "\nProduction containers:"
 	@docker-compose -f docker-compose.prod.yml ps
-<<<<<<< HEAD
 	@echo "\nMonitoring containers:"
 	@docker-compose -f docker-compose.monitoring.yml ps
-=======
->>>>>>> main
 
 # Testing
 test-backend: ## Run backend tests
@@ -105,6 +85,26 @@ test-frontend: ## Run frontend tests (if tests exist)
 	cd frontend && yarn test --watchAll=false
 
 test: test-backend ## Run all tests
+
+# Integration tests
+test-integration: ## Run backend integration tests
+	cd backend/app && go test -v ./integration_test/...
+
+test-unit: ## Run only unit tests (excluding integration)
+	cd backend/app && go test -v $(shell find . -name "*.go" -path "*/domain/*" -o -path "*/infrastructure/*" | grep -v integration_test | xargs dirname | sort -u | sed 's|^\.|./|')
+
+test-all: test-backend test-integration ## Run all backend tests including integration tests
+
+# Code quality
+lint-backend: ## Run Go linter
+	cd backend/app && go vet ./...
+	cd backend/app && go fmt ./...
+
+build-backend: ## Build backend binary
+	cd backend/app && go build -o bin/server cmd/main.go
+
+run-backend: ## Run backend locally (requires environment variables)
+	cd backend/app && go run cmd/main.go
 
 # Image size analysis
 analyze-images: ## Show image sizes
