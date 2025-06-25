@@ -2,13 +2,16 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
+	analyticsApp "github-stats-metrics/application/analytics"
 	pullRequestUseCase "github-stats-metrics/application/pull_request"
 	pullRequestHandler "github-stats-metrics/presentation/pull_request"
 	githubRepository "github-stats-metrics/infrastructure/github_api"
+	"github-stats-metrics/infrastructure/repository"
 	todoUseCase "github-stats-metrics/application/todo"
 	todoHandler "github-stats-metrics/presentation/todo"
 	memoryRepository "github-stats-metrics/infrastructure/memory"
@@ -19,7 +22,7 @@ import (
 	"github-stats-metrics/shared/monitoring"
 )
 
-func StartWebServer(cfg *config.Config, logger *logging.StructuredLogger, metricsCollector *metrics.MetricsCollector, healthChecker *monitoring.HealthChecker) error {
+func StartWebServer(cfg *config.Config, logger *logging.StructuredLogger, metricsCollector *metrics.MetricsCollector, healthChecker *monitoring.HealthChecker, db *sql.DB) error {
 	ctx := context.Background()
 	
 	logger.Info(ctx, "Initializing web server", map[string]interface{}{
@@ -33,6 +36,11 @@ func StartWebServer(cfg *config.Config, logger *logging.StructuredLogger, metric
 	prRepository := githubRepository.NewRepository(cfg)
 	prUseCase := pullRequestUseCase.NewUseCase(prRepository)
 	prHandler := pullRequestHandler.NewHandler(prUseCase)
+	
+	// PRメトリクス関連の依存関係
+	prMetricsRepo := repository.NewPRMetricsRepository(db)
+	metricsAggregator := analyticsApp.NewMetricsAggregator()
+	prMetricsHandler := pullRequestHandler.NewPRMetricsHandler(prMetricsRepo, metricsAggregator)
 	
 	// Todo関連の依存関係
 	todoRepository := memoryRepository.NewTodoRepository()
@@ -48,6 +56,9 @@ func StartWebServer(cfg *config.Config, logger *logging.StructuredLogger, metric
 	// API エンドポイント
 	r.HandleFunc("/api/todos", todoHandlerInstance.GetTodos).Methods("GET")
 	r.HandleFunc("/api/pull_requests", prHandler.GetPullRequests).Methods("GET")
+	
+	// PRメトリクス API ルートの登録
+	prMetricsHandler.RegisterRoutes(r)
 
 	// ミドルウェアの適用
 	handler := corsMiddleware(r, cfg)
@@ -57,6 +68,11 @@ func StartWebServer(cfg *config.Config, logger *logging.StructuredLogger, metric
 		"endpoints": []string{
 			"/api/todos",
 			"/api/pull_requests", 
+			"/api/pull_requests/{id}/metrics",
+			"/api/metrics/cycle_time",
+			"/api/metrics/review_time",
+			"/api/developers/{developer}/metrics",
+			"/api/repositories/{repository}/metrics",
 			"/health",
 			"/metrics",
 		},
