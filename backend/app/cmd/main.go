@@ -49,10 +49,9 @@ func main() {
 	healthChecker := monitoring.NewHealthChecker(cfg)
 
 	logger.Info(ctx, "Starting GitHub Stats Metrics application", map[string]interface{}{
-		"version":    "1.0.0",
-		"log_level":  cfg.Logging.Level,
-		"server_host": cfg.Server.Host,
-		"server_port": cfg.Server.Port,
+		"version":      "1.0.0",
+		"log_level":    cfg.Logging.Level,
+		"listen_address": cfg.GetListenAddress(),
 	})
 
 	// server パッケージから StartWebServer を呼び出す
