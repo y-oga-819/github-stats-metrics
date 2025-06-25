@@ -543,7 +543,7 @@ func (repo *AggregatedMetricsRepository) convertTeamMetricsToStorage(metrics *an
 		
 		// 生産性指標（チームでは計算しない）
 		PRsPerDay:   float64(metrics.TotalPRs) / repo.calculateDays(metrics.DateRange),
-		LinesPerDay: metrics.SizeStats.LinesChanged.Sum / repo.calculateDays(metrics.DateRange),
+		LinesPerDay: float64(metrics.SizeStats.LinesChanged.Sum) / repo.calculateDays(metrics.DateRange),
 		Throughput:  float64(metrics.TotalPRs),
 		
 		// トレンド情報
@@ -699,7 +699,7 @@ func (repo *AggregatedMetricsRepository) convertRepositoryMetricsToStorage(metri
 		
 		// 生産性指標
 		PRsPerDay:   float64(metrics.TotalPRs) / repo.calculateDays(metrics.DateRange),
-		LinesPerDay: metrics.SizeStats.LinesChanged.Sum / repo.calculateDays(metrics.DateRange),
+		LinesPerDay: float64(metrics.SizeStats.LinesChanged.Sum) / repo.calculateDays(metrics.DateRange),
 		Throughput:  float64(metrics.TotalPRs),
 		
 		// トレンド情報（リポジトリメトリクスには含まれないため空）
