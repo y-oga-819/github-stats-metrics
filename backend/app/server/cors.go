@@ -2,15 +2,15 @@ package server
 
 import (
 	"net/http"
-	"os"
-	"strings"
+	
+	"github-stats-metrics/shared/config"
 )
 
 // corsMiddleware はCORS設定を一元管理するミドルウェア
-func corsMiddleware(next http.Handler) http.Handler {
+func corsMiddleware(next http.Handler, cfg *config.Config) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 許可するオリジンを環境変数から取得（デフォルトは開発環境）
-		allowedOrigins := getAllowedOrigins()
+		// 設定から許可するオリジンを取得
+		allowedOrigins := cfg.Security.AllowedOrigins
 		origin := r.Header.Get("Origin")
 		
 		// オリジンチェック
@@ -30,22 +30,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-// getAllowedOrigins は許可するオリジン一覧を取得
-func getAllowedOrigins() []string {
-	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
-	if allowedOrigins == "" {
-		// デフォルトは開発環境のみ
-		return []string{"http://localhost:3000"}
-	}
-	
-	origins := strings.Split(allowedOrigins, ",")
-	for i, origin := range origins {
-		origins[i] = strings.TrimSpace(origin)
-	}
-	
-	return origins
 }
 
 // isOriginAllowed はオリジンが許可されているかチェック
