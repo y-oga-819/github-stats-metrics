@@ -329,8 +329,155 @@ func (r *repository) logRateLimitInfo(rateLimit struct {
 
 // GetPullRequestByID は特定IDのPull Requestを取得
 func (r *repository) GetPullRequestByID(ctx context.Context, id string) (*prDomain.PullRequest, error) {
-	// 実装は今後必要に応じて追加
-	return nil, fmt.Errorf("not implemented yet")
+	if r.client == nil {
+		return nil, errors.New("GitHub client is not initialized")
+	}
+	
+	query := ReviewMetricsQuery{}
+	variables := map[string]interface{}{
+		"prId": githubv4.ID(id),
+	}
+	
+	if err := r.client.Query(ctx, &query, variables); err != nil {
+		return nil, r.handleGitHubAPIError(err)
+	}
+	
+	domainPR := convertExtendedToDomain(query.Node.PullRequest)
+	return &domainPR, nil
+}
+
+// GetPullRequestWithMetrics は詳細メトリクス付きでPRを取得
+func (r *repository) GetPullRequestWithMetrics(ctx context.Context, id string) (*prDomain.PRMetrics, error) {
+	if r.client == nil {
+		return nil, errors.New("GitHub client is not initialized")
+	}
+	
+	query := ReviewMetricsQuery{}
+	variables := map[string]interface{}{
+		"prId": githubv4.ID(id),
+	}
+	
+	if err := r.client.Query(ctx, &query, variables); err != nil {
+		return nil, r.handleGitHubAPIError(err)
+	}
+	
+	prMetrics := convertToPRMetrics(query.Node.PullRequest)
+	return prMetrics, nil
+}
+
+// GetFileDetails は特定PRのファイル詳細を取得
+func (r *repository) GetFileDetails(ctx context.Context, prId string) ([]prDomain.FileChangeMetrics, error) {
+	if r.client == nil {
+		return nil, errors.New("GitHub client is not initialized")
+	}
+	
+	var allFiles []prDomain.FileChangeMetrics
+	cursor := (*githubv4.String)(nil)
+	
+	for {
+		query := FileDetailsQuery{}
+		variables := map[string]interface{}{
+			"prId":   githubv4.ID(prId),
+			"cursor": cursor,
+		}
+		
+		if err := r.client.Query(ctx, &query, variables); err != nil {
+			return nil, r.handleGitHubAPIError(err)
+		}
+		
+		// ファイル情報を変換
+		for _, file := range query.Node.PullRequest.Files.Nodes {
+			fileMetrics := prDomain.FileChangeMetrics{
+				FileName:     string(file.Path),
+				FileType:     getFileExtension(string(file.Path)),
+				LinesAdded:   int(file.Additions),
+				LinesDeleted: int(file.Deletions),
+				IsNewFile:    string(file.ChangeType) == "ADDED",
+				IsDeleted:    string(file.ChangeType) == "DELETED",
+				IsRenamed:    string(file.ChangeType) == "RENAMED",
+			}
+			allFiles = append(allFiles, fileMetrics)
+		}
+		
+		if !query.Node.PullRequest.Files.PageInfo.HasNextPage {
+			break
+		}
+		
+		cursor = githubv4.NewString(query.Node.PullRequest.Files.PageInfo.EndCursor)
+	}
+	
+	return allFiles, nil
+}
+
+// GetReviewTimeline は特定PRのレビュータイムラインを取得
+func (r *repository) GetReviewTimeline(ctx context.Context, prId string) ([]prDomain.ReviewEvent, error) {
+	if r.client == nil {
+		return nil, errors.New("GitHub client is not initialized")
+	}
+	
+	var allEvents []prDomain.ReviewEvent
+	cursor := (*githubv4.String)(nil)
+	
+	for {
+		query := ReviewTimelineQuery{}
+		variables := map[string]interface{}{
+			"prId":   githubv4.ID(prId),
+			"cursor": cursor,
+		}
+		
+		if err := r.client.Query(ctx, &query, variables); err != nil {
+			return nil, r.handleGitHubAPIError(err)
+		}
+		
+		// タイムラインイベントを変換
+		for _, item := range query.Node.PullRequest.TimelineItems.Nodes {
+			if !item.ReviewRequestedEvent.CreatedAt.Time.IsZero() {
+				event := prDomain.ReviewEvent{
+					Type:      prDomain.ReviewEventTypeRequested,
+					CreatedAt: item.ReviewRequestedEvent.CreatedAt.Time,
+					Actor:     string(item.ReviewRequestedEvent.Actor.Login),
+					Reviewer:  string(item.ReviewRequestedEvent.RequestedReviewer.User.Login),
+				}
+				allEvents = append(allEvents, event)
+			}
+			
+			if !item.PullRequestReview.CreatedAt.Time.IsZero() {
+				event := prDomain.ReviewEvent{
+					Type:      convertReviewState(item.PullRequestReview.State),
+					CreatedAt: item.PullRequestReview.CreatedAt.Time,
+					Actor:     string(item.PullRequestReview.Author.Login),
+					Reviewer:  string(item.PullRequestReview.Author.Login),
+				}
+				allEvents = append(allEvents, event)
+			}
+			
+			if !item.ReadyForReviewEvent.CreatedAt.Time.IsZero() {
+				event := prDomain.ReviewEvent{
+					Type:      prDomain.ReviewEventTypeReadyForReview,
+					CreatedAt: item.ReadyForReviewEvent.CreatedAt.Time,
+					Actor:     string(item.ReadyForReviewEvent.Actor.Login),
+				}
+				allEvents = append(allEvents, event)
+			}
+			
+			if !item.MergedEvent.CreatedAt.Time.IsZero() {
+				event := prDomain.ReviewEvent{
+					Type:      prDomain.ReviewEventTypeMerged,
+					CreatedAt: item.MergedEvent.CreatedAt.Time,
+					Actor:     string(item.MergedEvent.Actor.Login),
+				}
+				allEvents = append(allEvents, event)
+			}
+		}
+		
+		if !query.Node.PullRequest.TimelineItems.PageInfo.HasNextPage {
+			break
+		}
+		
+		cursor = githubv4.NewString(query.Node.PullRequest.TimelineItems.PageInfo.EndCursor)
+	}
+	
+	return allEvents, nil
 }
 
 // GetRepositories は対象リポジトリ一覧を取得
