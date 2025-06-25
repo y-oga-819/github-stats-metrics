@@ -13,17 +13,18 @@ import (
 	todoHandler "github-stats-metrics/presentation/todo"
 	healthHandler "github-stats-metrics/presentation/health"
 	memoryRepository "github-stats-metrics/infrastructure/memory"
+	"github-stats-metrics/shared/config"
 )
 
-func StartWebServer() error {
+func StartWebServer(cfg *config.Config) error {
 	fmt.Println("Start Web Server!")
-	fmt.Println("ex) http://localhost:8080/api/pull_requests")
+	fmt.Printf("ex) http://localhost:%d/api/pull_requests\n", cfg.Server.Port)
 	
 	// 依存関係の注入（Clean Architecture パターン）
 	// Infrastructure層 → Application層 → Presentation層の順で組み立て
 	
 	// Pull Request関連の依存関係
-	prRepository := githubRepository.NewRepository()
+	prRepository := githubRepository.NewRepository(cfg)
 	prUseCase := pullRequestUseCase.NewUseCase(prRepository)
 	prHandler := pullRequestHandler.NewHandler(prUseCase)
 	
@@ -43,8 +44,8 @@ func StartWebServer() error {
 	r.HandleFunc("/api/pull_requests", prHandler.GetPullRequests).Methods("GET")
 
 	// CORSミドルウェアを適用
-	handler := corsMiddleware(r)
+	handler := corsMiddleware(r, cfg)
 
-	// ポートを指定してサーバーを起動
-	return http.ListenAndServe(":8080", handler)
+	// 設定からポートを取得してサーバーを起動
+	return http.ListenAndServe(cfg.GetListenAddress(), handler)
 }
