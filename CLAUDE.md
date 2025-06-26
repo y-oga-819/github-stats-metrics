@@ -74,13 +74,10 @@ git checkout -b [category]/[feature-name]
 - `documentation/[分析内容]` - 分析・調査系ドキュメント
 
 #### 2. 作業とコミット
-- **コミット粒度**: 論理的な作業単位ごとに実行
-- **コミットメッセージ**: Conventional Commits形式
-  - `feat:` - 新機能
-  - `fix:` - バグ修正
-  - `docs:` - ドキュメント
-  - `refactor:` - リファクタリング
-  - `test:` - テスト追加・修正
+
+**基本コミット戦略**:
+- **粒度**: 論理的な作業単位ごと（TDDの場合は Red-Green-Refactor サイクル）
+- **形式**: Conventional Commits（`feat:`, `fix:`, `docs:`, `refactor:`, `test:`）
 
 ```bash
 git add [対象ファイル]
@@ -91,6 +88,14 @@ git commit -m "type: 簡潔な説明
 🤖 Generated with [Claude Code](https://claude.ai/code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>"
+```
+
+**TDD適用時の細分化コミット**:
+```bash
+# RED: 失敗するテスト → GREEN: 最小実装 → REFACTOR: 改善
+git commit -m "test: [機能名] - RED: [テストケース]"
+git commit -m "feat: [機能名] - GREEN: テスト通過実装"  
+git commit -m "refactor: [機能名] - [改善内容]"
 ```
 
 #### 3. プルリクエスト作成
