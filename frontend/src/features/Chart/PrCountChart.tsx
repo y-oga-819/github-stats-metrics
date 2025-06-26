@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Bar } from "react-chartjs-2";
 import { Sprint } from "../sprintlist/SprintRow";
 import { Metrics } from "./Chart";
@@ -29,17 +30,25 @@ type PrCountChartProps = {
 }
 
 export const PrCountChart: React.FC<PrCountChartProps> = ({sprintList, prCountList}) => {
-    const labels = sprintList.map((sprint) => sprint.id)
-    const datasets = {
-        labels,
-        datasets: [
-          {
-            label: 'マージしたPR数',
-            data: Object.values(prCountList.sort((a, b) => a.sprintId - b.sprintId).reduce((prev, current) => ({[current.sprintId]: current.score,...prev}), {})),
-            backgroundColor: 'rgb(255, 99, 132)',
-          },
-        ],
-      };
+    const datasets = useMemo(() => {
+        const labels = sprintList.map((sprint) => sprint.id);
+        const processedData = Object.values(
+            prCountList
+                .sort((a, b) => a.sprintId - b.sprintId)
+                .reduce((prev, current) => ({[current.sprintId]: current.score, ...prev}), {})
+        );
+
+        return {
+            labels,
+            datasets: [
+                {
+                    label: 'マージしたPR数',
+                    data: processedData,
+                    backgroundColor: 'rgb(255, 99, 132)',
+                },
+            ],
+        };
+    }, [sprintList, prCountList]);
 
     return (
         <Bar options={chartOptions} data={datasets} />
