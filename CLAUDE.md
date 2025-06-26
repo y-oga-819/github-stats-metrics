@@ -193,22 +193,39 @@ app/
 └── integration_test/       # Integration test suites
 ```
 
-### Frontend Architecture (Feature-Based)
+### Frontend Architecture (Feature-Based + React/TypeScript)
 ```
 src/
 ├── App.tsx                 # Main app component with navigation
-├── Router.tsx              # Route definitions
-└── features/               # Feature-based organization
-    ├── Chart/              # Metrics visualization components
+├── App.css                 # Global application styles
+├── Router.tsx              # Route definitions and routing logic
+├── main.tsx                # Application entry point (Vite)
+├── index.css               # Global CSS and Tailwind imports
+├── vite-env.d.ts           # Vite environment type definitions
+├── assets/                 # Static assets
+│   └── react.svg           # React logo and icons
+└── features/               # Feature-based modular organization
+    ├── Chart/              # Metrics visualization and analytics
     │   ├── Chart.tsx       # Main chart container with data fetching
-    │   ├── MetricsChart.tsx    # PR timing metrics chart
-    │   ├── PrCountChart.tsx    # PR count visualization
-    │   └── DevDayDeveloperChart.tsx # Developer productivity chart
-    ├── pullrequestlist/    # PR list functionality
-    │   ├── PullRequestsFetcher.ts  # API client for PR data
-    │   └── PullRequest.tsx         # PR display components
-    ├── sprint/             # Sprint detail views
+    │   ├── MetricsChart.tsx # PR timing metrics visualization
+    │   ├── PrCountChart.tsx # PR count charts
+    │   ├── DevDayDeveloperChart.tsx # Developer productivity metrics
+    │   ├── hooks/          # Chart-specific custom hooks
+    │   │   └── useBatchPullRequests.ts # Batch PR data fetching
+    │   └── utils/          # Chart utility functions
+    │       └── metricsCalculator.ts # Metrics calculation logic
+    ├── pullrequestlist/    # PR list display and management
+    │   ├── PullRequest.tsx # Individual PR display component
+    │   ├── PullRequestList.tsx # PR list container component
+    │   ├── PullRequestsFetcher.ts # API client for PR data
+    │   ├── types.ts        # PR-related type definitions
+    │   └── README.md       # Feature documentation
+    ├── sprint/             # Sprint management and details
+    │   └── SprintDetail.tsx # Sprint detail view component
     └── sprintlist/         # Sprint list management
+        ├── SprintList.tsx  # Sprint list container
+        ├── SprintRow.tsx   # Individual sprint row component
+        └── GetConstSprintList.ts # Sprint data provider
 ```
 
 ### API Endpoints
