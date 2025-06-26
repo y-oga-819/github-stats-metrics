@@ -11,32 +11,32 @@ help: ## Show this help message
 dev: build-dev up-dev ## Build and start development environment
 
 build-dev: ## Build development containers
-	docker-compose build
+	docker compose build
 
 up-dev: ## Start development environment
-	docker-compose up -d
+	docker compose up -d
 
 # Production targets
 prod: build-prod up-prod ## Build and start production environment
 
 build-prod: ## Build production containers
-	docker-compose -f docker-compose.prod.yml build
+	docker compose -f docker compose.prod.yml build
 
 up-prod: ## Start production environment
-	docker-compose -f docker-compose.prod.yml up -d
+	docker compose -f docker compose.prod.yml up -d
 
 # Monitoring targets
 monitoring: ## Start full monitoring stack (app + prometheus + grafana + loki)
-	docker-compose -f docker-compose.monitoring.yml up -d
+	docker compose -f docker compose.monitoring.yml up -d
 
 monitoring-build: ## Build and start monitoring stack
-	docker-compose -f docker-compose.monitoring.yml up --build -d
+	docker compose -f docker compose.monitoring.yml up --build -d
 
 monitoring-down: ## Stop monitoring stack
-	docker-compose -f docker-compose.monitoring.yml down
+	docker compose -f docker compose.monitoring.yml down
 
 monitoring-logs: ## Show monitoring stack logs
-	docker-compose -f docker-compose.monitoring.yml logs -f
+	docker compose -f docker compose.monitoring.yml logs -f
 
 # Monitoring URLs
 monitoring-urls: ## Show monitoring service URLs
@@ -53,29 +53,29 @@ monitoring-urls: ## Show monitoring service URLs
 
 # General targets
 down: ## Stop all containers
-	docker-compose down
-	docker-compose -f docker-compose.prod.yml down
-	docker-compose -f docker-compose.monitoring.yml down
+	docker compose down
+	docker compose -f docker compose.prod.yml down
+	docker compose -f docker compose.monitoring.yml down
 
 clean: ## Remove all containers and images
-	docker-compose down --rmi all --volumes --remove-orphans
-	docker-compose -f docker-compose.prod.yml down --rmi all --volumes --remove-orphans
-	docker-compose -f docker-compose.monitoring.yml down --rmi all --volumes --remove-orphans
+	docker compose down --rmi all --volumes --remove-orphans
+	docker compose -f docker compose.prod.yml down --rmi all --volumes --remove-orphans
+	docker compose -f docker compose.monitoring.yml down --rmi all --volumes --remove-orphans
 
 logs: ## Show logs from all containers
-	docker-compose logs -f
+	docker compose logs -f
 
 logs-prod: ## Show logs from production containers
-	docker-compose -f docker-compose.prod.yml logs -f
+	docker compose -f docker compose.prod.yml logs -f
 
 # Health checks
 health: ## Check health of all containers
 	@echo "Development containers:"
-	@docker-compose ps
+	@docker compose ps
 	@echo "\nProduction containers:"
-	@docker-compose -f docker-compose.prod.yml ps
+	@docker compose -f docker compose.prod.yml ps
 	@echo "\nMonitoring containers:"
-	@docker-compose -f docker-compose.monitoring.yml ps
+	@docker compose -f docker compose.monitoring.yml ps
 
 # Testing
 test-backend: ## Run backend tests

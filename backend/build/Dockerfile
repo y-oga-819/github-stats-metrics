@@ -1,4 +1,4 @@
-FROM golang:1.21.4-bullseye
+FROM golang:1.22-bullseye
 
 ENV ROOT=/go/src/app
 WORKDIR ${ROOT}
