@@ -11,6 +11,7 @@ services:
       - 8080:8080
   frontend:
     container_name: dev-frontend
+    platform: linux/amd64  # x86_64アーキテクチャを強制
     build:
       context: frontend
       dockerfile: ./Dockerfile
@@ -22,6 +23,8 @@ services:
     environment:
       PORT: 3000
       API_URL: http://backend:8080 # backendコンテナにリクエストされるように設定
+      NODE_TLS_REJECT_UNAUTHORIZED: 0  # SSL証明書エラー回避
+      NPM_CONFIG_STRICT_SSL: false      # npm SSL無効化
     command:
-      /bin/sh -c "yarn install && yarn build && yarn dev"
+      /bin/sh -c "npm config set strict-ssl false && npm install && npm run build && npm run dev"
 
