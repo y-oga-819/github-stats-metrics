@@ -116,26 +116,41 @@ gh pr create --title "[タイトル]" --body "[詳細説明]"
 - マージ順序の指示: "Merge after PR #XX"
 - 影響範囲の説明: 依存する機能との関係性
 
-## Development Commands
+## 🛠️ 開発環境・コマンド
 
-### Backend (Go)
-- **Run backend locally**: `cd backend/app && go run cmd/main.go`
-- **Build backend**: `cd backend/app && go build cmd/main.go`
-- **Install dependencies**: `cd backend/app && go mod tidy`
-- **Backend runs on**: http://localhost:8080
+### 開発サーバー起動
+```bash
+# Frontend (React + TypeScript)
+cd frontend && yarn dev              # http://localhost:3000
 
-### Frontend (React + TypeScript)
-- **Install dependencies**: `cd frontend && yarn install`
-- **Run development server**: `cd frontend && yarn dev`
-- **Build for production**: `cd frontend && yarn build`
-- **Lint code**: `cd frontend && yarn lint`
-- **Frontend runs on**: http://localhost:3000
+# Backend (Go)  
+cd backend/app && go run cmd/main.go # http://localhost:8080
 
-### Docker Development
-- **Start full stack**: `docker-compose up`
-- **Rebuild containers**: `docker-compose up --build`
-- Backend container: `dev-backend` (port 8080)
-- Frontend container: `dev-frontend` (port 3000)
+# Docker（全体）
+docker-compose up                    # Backend:8080, Frontend:3000
+```
+
+### 依存関係管理
+```bash
+# Frontend
+cd frontend && yarn install
+
+# Backend  
+cd backend/app && go mod tidy
+```
+
+### ビルド・テスト
+```bash
+# Frontend
+cd frontend && yarn build           # 本番ビルド
+cd frontend && yarn test            # テスト実行
+cd frontend && yarn lint            # Lint実行
+
+# Backend
+cd backend/app && go build cmd/main.go  # ビルド
+cd backend/app && go test ./...         # テスト実行
+cd backend/app && go fmt ./...          # フォーマット
+```
 
 ## Architecture Overview
 
