@@ -313,14 +313,26 @@ go clean -modcache && go mod tidy
 - Epic branchの除外、ページネーション対応
 
 ### 計算メトリクス
+
+#### 基本メトリクス
 - **Review Time**: PR作成 → 初回レビュー
 - **Approval Time**: 初回レビュー → 最終承認  
 - **Merge Time**: 承認 → マージ
+- **Cycle Time**: PR作成 → マージ完了
 - **PR Count**: スプリント当たりPR数
-- **Dev/Day/Developer**: 開発者1日あたりPR数（5日スプリント想定）
+
+#### Analytics機能
+- **Team Metrics**: チーム全体のパフォーマンス分析
+- **Developer Metrics**: 個人別生産性指標・ボトルネック検出
+- **Repository Metrics**: リポジトリ別品質・効率性分析
+- **Trend Analysis**: 時系列でのパフォーマンス変化
+- **Statistical Analysis**: パーセンタイル計算・外れ値検出
 
 ### 技術スタック
-- **Backend**: Clean Architecture + DDD (Go)
-- **Frontend**: Feature-based + React Query (React/TypeScript)
+- **Backend**: Clean Architecture + DDD + Repository Pattern (Go)
+- **Frontend**: Feature-based + React Query + Custom Hooks (React/TypeScript)
+- **データ層**: In-memory Repository + GitHub GraphQL API
 - **可視化**: Chart.js, ApexCharts
 - **スタイル**: TailwindCSS
+- **監視**: Prometheus メトリクス, ヘルスチェック
+- **開発基盤**: Vite, Docker Compose
