@@ -1,4 +1,4 @@
-import { PullRequest } from '../../pullrequestlist/PullRequestRow';
+import { PullRequest } from '../../pullrequestlist/types';
 import { Sprint } from '../../sprintlist/SprintRow';
 import { Metrics } from '../Chart';
 
@@ -13,11 +13,14 @@ export class MetricsCalculator {
   static calculateUntilFirstReviewed(pullRequests: PullRequest[]): number {
     if (pullRequests.length === 0) return 0;
     
-    const totalTime = pullRequests
-      .map(pr => (pr.firstReviewed.getTime() - pr.created.getTime()) / 1000)
+    const validPRs = pullRequests.filter(pr => pr.firstReviewed !== null);
+    if (validPRs.length === 0) return 0;
+    
+    const totalTime = validPRs
+      .map(pr => (pr.firstReviewed!.getTime() - pr.created.getTime()) / 1000)
       .reduce((sum, time) => sum + time, 0);
     
-    return totalTime / pullRequests.length;
+    return totalTime / validPRs.length;
   }
 
   /**
@@ -26,11 +29,14 @@ export class MetricsCalculator {
   static calculateUntilLastApproved(pullRequests: PullRequest[]): number {
     if (pullRequests.length === 0) return 0;
     
-    const totalTime = pullRequests
-      .map(pr => (pr.lastApproved.getTime() - pr.firstReviewed.getTime()) / 1000)
+    const validPRs = pullRequests.filter(pr => pr.lastApproved !== null && pr.firstReviewed !== null);
+    if (validPRs.length === 0) return 0;
+    
+    const totalTime = validPRs
+      .map(pr => (pr.lastApproved!.getTime() - pr.firstReviewed!.getTime()) / 1000)
       .reduce((sum, time) => sum + time, 0);
     
-    return totalTime / pullRequests.length;
+    return totalTime / validPRs.length;
   }
 
   /**
@@ -39,11 +45,14 @@ export class MetricsCalculator {
   static calculateUntilMerged(pullRequests: PullRequest[]): number {
     if (pullRequests.length === 0) return 0;
     
-    const totalTime = pullRequests
-      .map(pr => (pr.merged.getTime() - pr.lastApproved.getTime()) / 1000)
+    const validPRs = pullRequests.filter(pr => pr.merged !== null && pr.lastApproved !== null);
+    if (validPRs.length === 0) return 0;
+    
+    const totalTime = validPRs
+      .map(pr => (pr.merged!.getTime() - pr.lastApproved!.getTime()) / 1000)
       .reduce((sum, time) => sum + time, 0);
     
-    return totalTime / pullRequests.length;
+    return totalTime / validPRs.length;
   }
 
   /**

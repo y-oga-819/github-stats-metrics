@@ -5,6 +5,7 @@ import (
 	"time"
 
 	analyticsApp "github-stats-metrics/application/analytics"
+	prDomain "github-stats-metrics/domain/pull_request"
 	"github-stats-metrics/shared/utils"
 )
 
@@ -430,10 +431,10 @@ func (presenter *AnalyticsPresenter) formatDuration(d time.Duration) string {
 	}
 }
 
-func (presenter *AnalyticsPresenter) convertSizeCategoryDistribution(distribution map[interface{}]int) map[string]int {
+func (presenter *AnalyticsPresenter) convertSizeCategoryDistribution(distribution map[prDomain.PRSizeCategory]int) map[string]int {
 	result := make(map[string]int)
 	for k, v := range distribution {
-		result[fmt.Sprintf("%v", k)] = v
+		result[string(k)] = v
 	}
 	return result
 }

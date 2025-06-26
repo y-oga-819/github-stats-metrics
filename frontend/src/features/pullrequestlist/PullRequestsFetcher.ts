@@ -1,7 +1,6 @@
 import { Member, Sprint } from "../sprintlist/SprintRow";
 import { PR } from "./PullRequest";
 import { 
-  PullRequestAPIResponse, 
   PullRequest as TypedPullRequest,
   FetchPullRequestsResult,
   isValidPullRequestResponse,

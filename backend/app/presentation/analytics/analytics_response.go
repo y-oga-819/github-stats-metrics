@@ -2,9 +2,6 @@ package analytics
 
 import (
 	"time"
-
-	analyticsApp "github-stats-metrics/application/analytics"
-	"github-stats-metrics/shared/utils"
 )
 
 // TeamMetricsResponse はチームメトリクスのAPIレスポンス

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FetchPullRequests } from '../../pullrequestlist/PullRequestsFetcher';
 import { Sprint } from '../../sprintlist/SprintRow';
-import { PullRequest } from '../../pullrequestlist/PullRequestRow';
+import { PullRequest } from '../../pullrequestlist/types';
 
 export interface SprintPullRequests {
   sprintId: number;
@@ -50,7 +50,7 @@ export const useBatchPullRequests = (sprintList: Sprint[]) => {
         // 各スプリントに該当するPRを分類
         const sprintPullRequests: SprintPullRequests[] = sprintList.map(sprint => {
           const sprintPRs = filteredPRs.filter(pr => {
-            return pr.merged >= sprint.startDate && pr.merged <= sprint.endDate;
+            return pr.merged && pr.merged >= sprint.startDate && pr.merged <= sprint.endDate;
           });
 
           return {

@@ -12,7 +12,7 @@ import (
 	"github.com/gorilla/mux"
 
 	analyticsApp "github-stats-metrics/application/analytics"
-	prApp "github-stats-metrics/application/pull_request"
+	prDomain "github-stats-metrics/domain/pull_request"
 	"github-stats-metrics/infrastructure/repository"
 )
 
@@ -137,7 +137,7 @@ func (h *PRMetricsHandler) ListPRMetrics(w http.ResponseWriter, r *http.Request)
 	endIndex := startIndex + params.PageSize
 
 	if startIndex >= totalCount {
-		metrics = []*prApp.PRMetrics{}
+		metrics = []*prDomain.PRMetrics{}
 	} else if endIndex > totalCount {
 		metrics = metrics[startIndex:]
 	} else {

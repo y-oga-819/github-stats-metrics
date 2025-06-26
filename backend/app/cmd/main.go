@@ -55,7 +55,8 @@ func main() {
 	})
 
 	// server パッケージから StartWebServer を呼び出す
-	err = server.StartWebServer(cfg, logger, metricsCollector, healthChecker)
+	// TODO: 実際のデータベース接続を設定する
+	err = server.StartWebServer(cfg, logger, metricsCollector, healthChecker, nil)
 	if err != nil {
 		logger.Fatal(ctx, "Failed to start web server", err)
 		os.Exit(1)

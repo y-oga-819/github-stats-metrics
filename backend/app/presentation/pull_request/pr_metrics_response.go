@@ -2,8 +2,6 @@ package pull_request
 
 import (
 	"time"
-
-	prDomain "github-stats-metrics/domain/pull_request"
 )
 
 // PRMetricsResponse はPRメトリクスのAPIレスポンス
