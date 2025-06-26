@@ -5,7 +5,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Conversation Guidelines
 - 常に日本語で会話する
 
-## 作業フロー
+## 📋 クイックリファレンス
+
+### よく使うコマンド
+```bash
+# 開発環境起動
+cd frontend && yarn dev          # Frontend (http://localhost:3000)
+cd backend/app && go run cmd/main.go  # Backend (http://localhost:8080)
+docker-compose up               # 全体起動
+
+# 依存関係
+cd frontend && yarn install     # Frontend
+cd backend/app && go mod tidy   # Backend
+
+# 品質チェック
+cd frontend && yarn lint        # Frontend Lint
+cd backend/app && go fmt ./...  # Backend Format
+```
+
+### 新規参加者向けセットアップ
+1. 環境変数設定: `.env`ファイルに`GITHUB_TOKEN`を設定
+2. 依存関係インストール: Frontend(`yarn install`) + Backend(`go mod tidy`)
+3. 開発サーバー起動: `docker-compose up`または個別起動
+
+## 🔄 開発ワークフロー
 
 ### 基本的な作業手順
 1. **新規ブランチ作成**: 指示を受けたら必ずmainブランチから新規ブランチを作成
