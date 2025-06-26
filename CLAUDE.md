@@ -185,10 +185,6 @@ GITHUB_GRAPHQL_SEARCH_QUERY_TARGET_REPOSITORIES=owner/repo1,owner/repo2
 - **PR Count**: Number of PRs per sprint
 - **Dev/Day/Developer**: PRs per developer per day (assuming 5-day sprints)
 
-### Current Issues
-- Chart data has duplicate entries (current branch: `frontend/fix/sync-metrics-and-sprint`)
-- Data is converted to Maps to eliminate duplicates
-- Hardcoded sprint data instead of dynamic API
 
 ### Development Notes
 - Backend uses clean architecture with domain-driven design
