@@ -201,17 +201,51 @@ src/
 3. **GitHub API**: GraphQL queries filter by date range, repositories, and developers
 4. **Metrics Calculation**: Frontend calculates timing metrics from PR lifecycle data
 
-## Environment Configuration
+## ⚙️ 環境設定
 
-### Required Environment Variables (.env)
-```
+### 必須環境変数 (.env)
+```env
 GITHUB_TOKEN=<your_github_token>
 GITHUB_GRAPHQL_SEARCH_QUERY_TARGET_REPOSITORIES=owner/repo1,owner/repo2
 ```
 
-### Vite Configuration
-- API proxy configured for `/api` routes to backend
-- Supports Docker environment with `API_URL` environment variable
+### Vite設定
+- API proxy: `/api` → backend
+- Docker対応: `API_URL`環境変数
+
+## 🚨 トラブルシューティング
+
+### よくあるエラーと解決方法
+
+**Docker関連**:
+```bash
+# コンテナが起動しない
+docker-compose down && docker-compose up --build
+
+# ポート競合エラー  
+lsof -i :3000  # プロセス確認
+kill -9 <PID>  # プロセス終了
+```
+
+**GitHub API関連**:
+```bash
+# API制限エラー
+# → GITHUB_TOKENの権限確認
+# → リクエスト頻度の調整
+
+# GraphQL構文エラー  
+# → クエリの構文チェック
+# → GitHub GraphQL Explorer で検証
+```
+
+**依存関係エラー**:
+```bash
+# Frontend
+rm -rf node_modules yarn.lock && yarn install
+
+# Backend
+go clean -modcache && go mod tidy
+```
 
 ## Key Technical Details
 
