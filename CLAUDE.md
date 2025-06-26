@@ -152,7 +152,7 @@ cd backend/app && go test ./...         # テスト実行
 cd backend/app && go fmt ./...          # フォーマット
 ```
 
-## Architecture Overview
+## 🏗️ アーキテクチャ概要
 
 ### Backend Architecture (Clean Architecture)
 ```
@@ -247,24 +247,22 @@ rm -rf node_modules yarn.lock && yarn install
 go clean -modcache && go mod tidy
 ```
 
-## Key Technical Details
+## 📊 技術詳細
 
-### GitHub Integration
-- Uses GitHub GraphQL API v4 with `githubv4` Go library
-- Searches for merged PRs within date ranges and specific repositories
-- Filters by author (developer) and excludes epic branches
-- Handles pagination for large result sets
+### GitHub連携
+- GitHub GraphQL API v4 + `githubv4` Go library
+- 日付範囲・リポジトリ・開発者でのPR検索
+- Epic branchの除外、ページネーション対応
 
-### Metrics Calculated
-- **Review Time**: Time from PR creation to first review
-- **Approval Time**: Time from first review to final approval  
-- **Merge Time**: Time from approval to merge
-- **PR Count**: Number of PRs per sprint
-- **Dev/Day/Developer**: PRs per developer per day (assuming 5-day sprints)
+### 計算メトリクス
+- **Review Time**: PR作成 → 初回レビュー
+- **Approval Time**: 初回レビュー → 最終承認  
+- **Merge Time**: 承認 → マージ
+- **PR Count**: スプリント当たりPR数
+- **Dev/Day/Developer**: 開発者1日あたりPR数（5日スプリント想定）
 
-
-### Development Notes
-- Backend uses clean architecture with domain-driven design
-- Frontend uses feature-based organization with React Query for API calls
-- Chart.js and ApexCharts for data visualization
-- TailwindCSS for styling
+### 技術スタック
+- **Backend**: Clean Architecture + DDD (Go)
+- **Frontend**: Feature-based + React Query (React/TypeScript)
+- **可視化**: Chart.js, ApexCharts
+- **スタイル**: TailwindCSS
