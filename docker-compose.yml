@@ -26,5 +26,5 @@ services:
       NODE_TLS_REJECT_UNAUTHORIZED: 0  # SSL証明書エラー回避
       NPM_CONFIG_STRICT_SSL: false      # npm SSL無効化
     command:
-      /bin/sh -c "npm config set strict-ssl false && npm install && npm run dev"
+      /bin/sh -c "npm config set strict-ssl false && rm -rf node_modules package-lock.json && npm install && npm run dev"
 
