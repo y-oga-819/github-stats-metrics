@@ -229,14 +229,35 @@ src/
 ```
 
 ### API Endpoints
-- `GET /api/pull_requests?startdate=YYYY-MM-DD&enddate=YYYY-MM-DD&developers[]=name1&developers[]=name2`
-- `GET /api/todos`
+
+#### 基本API
+- `GET /api/todos` - Todoリスト取得
+- `GET /api/pull_requests` - Pull Requestsリスト取得（メトリクス付き）
+
+#### PRメトリクス API
+- `GET /api/pull_requests/{id}/metrics` - 個別PRメトリクス
+- `GET /api/metrics/cycle_time` - サイクルタイムメトリクス
+- `GET /api/metrics/review_time` - レビュー時間メトリクス  
+- `GET /api/developers/{developer}/metrics` - 開発者別メトリクス
+- `GET /api/repositories/{repository}/metrics` - リポジトリ別メトリクス
+
+#### Analytics API（集計データ）
+- `GET /api/analytics/team_metrics` - チームメトリクス
+- `GET /api/analytics/developer_metrics` - 開発者メトリクス一覧
+- `GET /api/analytics/repository_metrics` - リポジトリメトリクス一覧
+- `GET /api/analytics/trends` - トレンド分析
+
+#### 監視・ヘルスチェック
+- `GET /health` - 基本ヘルスチェック
+- `GET /api/health` - PRメトリクス系ヘルスチェック
+- `GET /api/analytics/health` - Analytics系ヘルスチェック
+- `GET /metrics` - Prometheusメトリクス
 
 ### Data Flow
-1. **Frontend**: Sprint data (hardcoded) → API requests to backend
-2. **Backend**: HTTP request → Use case → GitHub API client → GraphQL query → Response formatting
-3. **GitHub API**: GraphQL queries filter by date range, repositories, and developers
-4. **Metrics Calculation**: Frontend calculates timing metrics from PR lifecycle data
+1. **Frontend**: React components → API calls → Chart.js/ApexCharts rendering
+2. **Backend**: HTTP request → Use case → Repository pattern → GitHub API client
+3. **GitHub API**: GraphQL queries → Data aggregation → Metrics calculation
+4. **Analytics**: Raw data → Statistical analysis → Trend calculation → Response formatting
 
 ## ⚙️ 環境設定
 
