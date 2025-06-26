@@ -154,23 +154,43 @@ cd backend/app && go fmt ./...          # フォーマット
 
 ## 🏗️ アーキテクチャ概要
 
-### Backend Architecture (Clean Architecture)
+### Backend Architecture (Clean Architecture + DDD)
 ```
 app/
 ├── cmd/main.go              # Application entry point
-├── server/webserver.go      # HTTP server setup with routing
+├── server/                  # HTTP server setup
+│   ├── webserver.go         # Router and middleware setup
+│   └── cors.go              # CORS configuration
 ├── application/             # Use cases and business logic
+│   ├── analytics/           # Analytics metrics aggregation
 │   ├── pull_request/        # PR-related use cases
 │   └── todo/               # Todo-related use cases
 ├── domain/                  # Core business entities
+│   ├── analytics/           # Analytics domain models
 │   ├── developer/          # Developer domain objects
 │   ├── pull_request/       # PR domain objects and requests
 │   └── todo/               # Todo domain objects
-├── infrastructure/         # External integrations
-│   └── github_api/         # GitHub GraphQL API client
-└── presentation/           # HTTP response formatting
-    ├── pull_request/       # PR response presenters
-    └── todo/               # Todo response presenters
+├── infrastructure/         # External integrations and persistence
+│   ├── github_api/         # GitHub GraphQL API client
+│   ├── memory/             # In-memory repository implementations
+│   └── repository/         # Repository interface implementations
+├── presentation/           # HTTP handlers and response formatting
+│   ├── analytics/          # Analytics metrics endpoints
+│   ├── health/             # Health check endpoints
+│   ├── pull_request/       # PR response presenters
+│   └── todo/               # Todo response presenters
+├── shared/                 # Cross-cutting concerns
+│   ├── config/             # Configuration management
+│   ├── errors/             # Error handling utilities
+│   ├── logger/             # Logging utilities
+│   ├── logging/            # Structured logging
+│   ├── metrics/            # Metrics collection
+│   ├── middleware/         # HTTP middleware
+│   ├── monitoring/         # Application monitoring
+│   └── utils/              # Common utilities
+├── cli/                    # Command-line interface
+├── config/                 # Application configuration
+└── integration_test/       # Integration test suites
 ```
 
 ### Frontend Architecture (Feature-Based)
