@@ -36,12 +36,22 @@ export const useBatchPullRequests = (sprintList: Sprint[]) => {
           sprintList[0].endDate
         );
 
+        // 全スプリントの全メンバーを統合
+        const allMembers = sprintList.reduce((members, sprint) => {
+          sprint.members.forEach(member => {
+            if (!members.find(m => m.name === member.name)) {
+              members.push(member);
+            }
+          });
+          return members;
+        }, [] as typeof sprintList[0]['members']);
+
         // 全期間のPull Requestsを1回のAPI呼び出しで取得
         const allPullRequests = await FetchPullRequests({
           id: 0, // バッチ用の仮ID
           startDate: earliestDate,
           endDate: latestDate,
-          members: [] // 全メンバーを取得
+          members: allMembers // 統合した全メンバー
         });
 
         // epicブランチを除外
